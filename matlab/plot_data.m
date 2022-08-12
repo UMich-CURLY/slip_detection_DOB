@@ -83,6 +83,7 @@ plot(vel_in(:,1),vel_in(:,4),'LineWidth',2);
 legend("vel\_est_x", "vel\_est_y","vel\_est_z", "vel\_in_x", "vel\_in_y", "vel\_in_z",'FontSize',20);
 
 %%  plot bias
+figure(4)
 plot(t,bias_est(:,2),'LineWidth',2);
 hold on
 plot(t,bias_est(:,3),'LineWidth',2);

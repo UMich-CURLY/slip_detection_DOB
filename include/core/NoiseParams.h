@@ -31,6 +31,10 @@ class NoiseParams {
         void setAccelerometerNoise(const Eigen::Vector3d& std);
         void setAccelerometerNoise(const Eigen::Matrix3d& cov);  
 
+        void setDisturbanceNoise(double std);
+        void setDisturbanceNoise(const Eigen::Vector3d& std);
+        void setDisturbanceNoise(const Eigen::Matrix3d& cov);
+
         void setGyroscopeBiasNoise(double std);
         void setGyroscopeBiasNoise(const Eigen::Vector3d& std);
         void setGyroscopeBiasNoise(const Eigen::Matrix3d& cov);
@@ -45,6 +49,7 @@ class NoiseParams {
 
         Eigen::Matrix3d getGyroscopeCov();
         Eigen::Matrix3d getAccelerometerCov();
+        Eigen::Matrix3d getDisturbanceCov();
         Eigen::Matrix3d getGyroscopeBiasCov();
         Eigen::Matrix3d getAccelerometerBiasCov();
         Eigen::Matrix3d getContactCov();
@@ -54,6 +59,7 @@ class NoiseParams {
     private:
         Eigen::Matrix3d Qg_;
         Eigen::Matrix3d Qa_;
+        Eigen::Matrix3d Qd_;
         Eigen::Matrix3d Qbg_;
         Eigen::Matrix3d Qba_;
         Eigen::Matrix3d Ql_;

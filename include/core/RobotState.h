@@ -47,7 +47,6 @@ class RobotState {
         const Eigen::Matrix3d getDisturbanceContactVelCovariance() const;   
         const int dimX() const;
         const int dimTheta() const;
-        const int dimDisturbance() const;
         const int dimP() const;
         const StateType getStateType() const;
         const Eigen::MatrixXd getWorldX() const;
@@ -86,7 +85,6 @@ class RobotState {
         StateType state_type_ = StateType::WorldCentric; 
         Eigen::MatrixXd X_;
         Eigen::VectorXd Theta_;
-        Eigen::VectorXd Disturbance_;
         Eigen::MatrixXd P_;
 };
 
