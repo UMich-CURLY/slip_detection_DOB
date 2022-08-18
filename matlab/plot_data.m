@@ -34,7 +34,7 @@ legend("est_x", "est_y","est_z", "gt_x", "gt_y", "gt_z",'FontSize',20);
 
 figure(1)
 hold on
-plot3(gt_pose(:,2),gt_pose(:,3),gt_pose(:,4));
+% plot3(gt_pose(:,2),gt_pose(:,3),gt_pose(:,4));
 % plot3(gt_pose_front(:,2),gt_pose_front(:,3),gt_pose_front(:,4));
 plot3(est_pose(:,2),est_pose(:,3),est_pose(:,4));
 % plot3(est_pose_body(:,2),est_pose_body(:,3),est_pose_body(:,4))
@@ -49,17 +49,32 @@ grid on
 %% disturbance
 figure(2);
 
-plot(disturbance(:,1),disturbance(1:end,2),'LineWidth',1.5);
+d = designfilt('lowpassfir', 'FilterOrder', 100, 'CutoffFrequency', 11, 'SampleRate', 200);
+disturbance_x = filter(d, disturbance(1:end,2));
+disturbance_y = filter(d, disturbance(1:end,3));
+disturbance_z = filter(d, disturbance(1:end,4));
+
+plot(disturbance(1:end,1),abs(disturbance_x),'LineWidth',1.5);
 hold on
-plot(disturbance(:,1),disturbance(1:end,3),'LineWidth',1.5);
+plot(disturbance(1:end,1),abs(disturbance_y),'LineWidth',1.5);
 hold on
-plot(disturbance(:,1),disturbance(1:end,4),'LineWidth',1.5);
+plot(disturbance(1:end,1),abs(disturbance_z),'LineWidth',1.5);
+
+%%
+
+figure(3);
+% plot(disturbance(1:end,1),disturbance(1:end,2),'LineWidth',1.5);
+% hold on
+% plot(disturbance(1:end,1),disturbance(1:end,3),'LineWidth',1.5);
+% hold on
+% plot(disturbance(1:end,1),disturbance(1:end,4),'LineWidth',1.5);
+
 
 % plot(imu(:,1),imu(1:end,2),'LineWidth',2);
 % hold on
 % plot(imu(:,1),imu(1:end,3),'LineWidth',2);
 % hold on
-plot(imu(:,1),imu(1:end,4)/10,'LineWidth',1.5);
+plot(imu(:,1),abs(imu(1:end,4))/20,'LineWidth',1.5);
 
 legend("disturbance_x", "disturbance_y","disturbance_z","w from IMU", 'FontSize',20);
 

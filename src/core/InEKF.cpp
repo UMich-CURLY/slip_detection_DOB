@@ -211,7 +211,7 @@ Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d
         Phi.block<3,3>(3,0) = gx*dt; // Phi_21
         Phi.block<3,3>(6,0) = 0.5*gx*dt2; // Phi_31
         Phi.block<3,3>(6,3) = Eigen::Matrix3d::Identity()*dt; // Phi_32
-        Phi.block<3,3>(9,9) = Eigen::Matrix3d::Identity()*(1-decaying_rate*dt+0.5*decaying_rate*decaying_rate*dt2);
+        Phi.block<3,3>(9,9) = Eigen::Matrix3d::Identity()*exp(-decaying_rate * dt); // (1-decaying_rate*dt+0.5*decaying_rate*decaying_rate*dt2);
         Phi.block<3,3>(0,dimP-dimTheta) = -RG1dt; // Phi_15
         Phi.block<3,3>(3,dimP-dimTheta) = -skew(v+RG1dt*a+g_*dt)*RG1dt + RG0*Phi25L; // Phi_25
         Phi.block<3,3>(6,dimP-dimTheta) = -skew(p+v*dt+RG2dt2*a+0.5*g_*dt2)*RG1dt + RG0*Phi35L; // Phi_35
@@ -221,7 +221,7 @@ Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d
         Phi.block<3,3>(3,dimP-dimTheta+3) = -RG1dt; // Phi_26
         Phi.block<3,3>(6,dimP-dimTheta+3) = -RG2dt2; // Phi_36
     }
-    std::cout << "Phi: " << Phi << std::endl;
+
     return Phi;
 }
 
@@ -255,11 +255,11 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
     Qc.block<3,3>(dimP-dimTheta,dimP-dimTheta) = noise_params_.getGyroscopeBiasCov();
     Qc.block<3,3>(dimP-dimTheta+3,dimP-dimTheta+3) = noise_params_.getAccelerometerBiasCov();
 
-    std::cout << "Qc: " << Qc << std::endl;
 
     // Noise Covariance Discretization
     Eigen::MatrixXd PhiG = Phi * G;
     Eigen::MatrixXd Qd = PhiG * Qc * PhiG.transpose() * dt; // Approximated discretized noise matrix (TODO: compute analytical)
+
     return Qd;
 }
 
@@ -267,7 +267,7 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
 // InEKF Propagation - Inertial Data
 void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
 
-    int decaying_rate = 1;
+    int decaying_rate = 0.99;
 
     // Bias corrected IMU measurements
     Eigen::Vector3d w = imu.head(3)  - state_.getGyroscopeBias();    // Angular Velocity
@@ -284,6 +284,8 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
     //  ------------ Propagate Covariance --------------- //
     Eigen::MatrixXd Phi = this->StateTransitionMatrix(w,a,decaying_rate,dt);
     Eigen::MatrixXd Qd = this->DiscreteNoiseMatrix(Phi, dt);
+    std::cout << "Qd: " << Qd << std::endl;
+    std::cout << "Phi * P * Phi.transpose(): " << Phi * P * Phi.transpose() << std::endl;
     Eigen::MatrixXd P_pred = Phi * P * Phi.transpose() + Qd;
 
     //  ------------ Propagate Mean --------------- // 

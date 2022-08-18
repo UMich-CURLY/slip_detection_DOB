@@ -322,7 +322,7 @@ void BodyEstimator::initState(const ImuMeasurement<double>& imu_packet_in,
     initial_state.setRotationCovariance(0.03*Eigen::Matrix3d::Identity());
     initial_state.setVelocityCovariance(0.01*Eigen::Matrix3d::Identity());
     initial_state.setPositionCovariance(0.00001*Eigen::Matrix3d::Identity());
-    initial_state.setDisturbanceContactVelCovariance(0.1*Eigen::Matrix3d::Identity());    
+    initial_state.setDisturbanceContactVelCovariance(0.01*Eigen::Matrix3d::Identity());    
     initial_state.setGyroscopeBiasCovariance(0.0001*Eigen::Matrix3d::Identity());
     initial_state.setAccelerometerBiasCovariance(0.0025*Eigen::Matrix3d::Identity());
 
