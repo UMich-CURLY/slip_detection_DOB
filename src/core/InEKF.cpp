@@ -119,7 +119,7 @@ void InEKF::setMagneticField(Eigen::Vector3d& true_magnetic_field) { magnetic_fi
 Eigen::Vector3d InEKF::getMagneticField() const { return magnetic_field_; }
 
 // Compute Analytical state transition matrix
-Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d& a,int decaying_rate, double dt) {
+Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d& a,double decaying_rate, double dt) {
     Eigen::Vector3d phi = w*dt;
     Eigen::Matrix3d G0 = Gamma_SO3(phi,0); // Computation can be sped up by computing G0,G1,G2 all at once
     Eigen::Matrix3d G1 = Gamma_SO3(phi,1); // TODO: These are also needed for the mean propagation, we should not compute twice
@@ -236,11 +236,8 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
     // Compute G using Adjoint of Xk if needed, otherwise identity (Assumes unpropagated state)
     if  ((state_.getStateType() == StateType::WorldCentric && error_type_ == ErrorType::RightInvariant) || 
          (state_.getStateType() == StateType::BodyCentric && error_type_ == ErrorType::LeftInvariant)) {
-        std::cout << "state_.getWorldX(): " << state_.getWorldX() << std::endl;
         G.block(0,0,dimP-dimTheta,dimP-dimTheta) = Adjoint_SEK3(state_.getWorldX()); 
     }
-
-    std::cout << "G: " << G << std::endl;
 
     // Continuous noise covariance 
     Eigen::MatrixXd Qc = Eigen::MatrixXd::Zero(dimP,dimP); // Landmark noise terms will remain zero
@@ -267,7 +264,7 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
 // InEKF Propagation - Inertial Data
 void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
 
-    int decaying_rate = 0.99;
+    double decaying_rate = 0.99;
 
     // Bias corrected IMU measurements
     Eigen::Vector3d w = imu.head(3)  - state_.getGyroscopeBias();    // Angular Velocity
@@ -305,7 +302,12 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
         X_pred.block<3,3>(0,0) = R * G0;
         X_pred.block<3,1>(0,3) = v + (R*G1*a + g_)*dt;
         X_pred.block<3,1>(0,4) = p + v*dt + (R*G2*a + 0.5*g_)*dt*dt;
+        std::cout << "The matrix X-1.1 is: \n" << X << std::endl;
+        std::cout << "The matrix dt is: \n" << dt << std::endl;    
+        std::cout << "The matrix decaying_rate*dt is: \n" << decaying_rate*dt << std::endl;    
+        std::cout << "The matrix exp(-decaying_rate*dt) is: \n" << exp(-decaying_rate*dt) << std::endl;
         X_pred.block<3,1>(0,5) = disturbance * exp(-decaying_rate*dt);
+        std::cout << "The matrix X-1.2 is: \n" << X << std::endl;    
     } else {
         // Propagate body-centric state estimate
         Eigen::MatrixXd X_pred = X;
@@ -318,7 +320,7 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
         }
     } 
 
-    std::cout << "X: " << X << std::endl;
+
 
     //  ------------ Update State --------------- // 
     state_.setX(X_pred);
@@ -350,14 +352,14 @@ void InEKF::CorrectRightInvariant(const Eigen::MatrixXd& Z, const Eigen::MatrixX
     Eigen::MatrixXd K = PHT * S.inverse();
 
     std::string sep = "\n----------------------------------------\n";
-    std::cout << "The matrix X is: \n" << X << sep << std::endl;
-    std::cout << "The matrix K is: \n" << K << sep << std::endl;
-    std::cout << "The matrix Z is: \n" << Z << sep << std::endl;
-    std::cout << "The matrix N is: \n" << N << sep << std::endl;
-    std::cout << "The matrix H is: \n" << H << sep << std::endl;
+    std::cout << "The matrix X-2 is: \n" << X << sep << std::endl;
+    // std::cout << "The matrix K is: \n" << K << sep << std::endl;
+    // std::cout << "The matrix Z is: \n" << Z << sep << std::endl;
+    // std::cout << "The matrix N is: \n" << N << sep << std::endl;
+    // std::cout << "The matrix H is: \n" << H << sep << std::endl;
     std::cout << "The matrix P is: \n" << P << sep << std::endl;
-    std::cout << "The matrix PHT is: \n" << PHT << sep << std::endl;
-    std::cout << "The matrix S is: \n" << S << sep << std::endl;
+    // std::cout << "The matrix PHT is: \n" << PHT << sep << std::endl;
+    // std::cout << "The matrix S is: \n" << S << sep << std::endl;
     
 
     // Compute state correction vector
@@ -365,9 +367,9 @@ void InEKF::CorrectRightInvariant(const Eigen::MatrixXd& Z, const Eigen::MatrixX
     // delta(9) = 0;
     // delta(10) = 0;
     delta(11) = 0;
-    std::cout << "delta: " << delta << std::endl;
+
     Eigen::MatrixXd dX = Exp_SEK3(delta.segment(0,delta.rows()-dimTheta));
-    std::cout << "dX: " << dX << std::endl;
+
     Eigen::VectorXd dTheta = delta.segment(delta.rows()-dimTheta, dimTheta);
     
     // Update state

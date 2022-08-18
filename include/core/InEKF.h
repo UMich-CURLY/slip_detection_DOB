@@ -228,7 +228,7 @@ the default.
         std::map<int,int> estimated_landmarks_;
         Eigen::Vector3d magnetic_field_;
 
-        Eigen::MatrixXd StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d& a,int decaying_rate, double dt);
+        Eigen::MatrixXd StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d& a,double decaying_rate, double dt);
         Eigen::MatrixXd DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt);
 
         // Corrects state using invariant observation models
