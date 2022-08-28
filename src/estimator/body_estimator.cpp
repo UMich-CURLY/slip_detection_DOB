@@ -90,12 +90,16 @@ void BodyEstimator::propagateIMU(const ImuMeasurement<double>& imu_packet_in, Hu
     Eigen::Vector3d disturbance = estimate.getDisturbanceContactVel();    
     Eigen::Vector3d bias = estimate.getTheta();
 
+    Eigen::MatrixXd P = estimate.getP();
+
     state.setBaseRotation(R);
     state.setBasePosition(p);
     state.setBaseVelocity(v); 
     state.setDisturbance(disturbance);    
     state.setImuBias(bias);
     state.setTime(t);
+
+    state.setP(P);
 
     // Store previous imu data
     t_prev_ = t;
@@ -159,12 +163,16 @@ void BodyEstimator::correctVelocity(const VelocityMeasurement& velocity_packet_i
         Eigen::Vector3d gyro_bias = estimate.getGyroscopeBias();
         Eigen::Vector3d acc_bias = estimate.getAccelerometerBias();
 
+        Eigen::MatrixXd P = estimate.getP();
+
         state.setBaseRotation(R);
         state.setBasePosition(p);
         state.setBaseVelocity(v); 
         state.setImuBias(bias);
         state.setDisturbance(disturbance);
         state.setTime(t);
+        
+        state.setP(P);
     }
     else{
         ROS_INFO("Velocity not updated because huge time different.");

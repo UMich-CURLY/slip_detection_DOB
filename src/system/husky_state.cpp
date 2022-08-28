@@ -23,6 +23,7 @@ void HuskyState::setJointState(
 void HuskyState::clear() {
     q_ = Eigen::Matrix<double,10,1>::Zero();
     dq_ = Eigen::Matrix<double,10,1>::Zero();
+    P_ = Eigen::Matrix<double,18,18>::Zero();
     // GRF_ = Eigen::Matrix<double,4,1>::Zero();
     return; 
 }
@@ -95,6 +96,13 @@ Eigen::VectorXd HuskyState::getImuBias() const{
 
 Eigen::VectorXd HuskyState::getDisturbance() const{
     return disturbance_;
+}
+
+Eigen::MatrixXd HuskyState::getP() const{
+    return P_;
+}
+void HuskyState::setP(const Eigen::MatrixXd& P){
+    P_ = P;
 }
 
 // Extract each DOF position by name

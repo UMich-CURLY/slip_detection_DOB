@@ -60,6 +60,7 @@ class HuskySystem {
         bool enable_wheel_vel_;
         bool enable_camera_vel_;
         bool enable_gps_vel_;
+        bool enable_friction_estimator;
         Eigen::Matrix<double,3,3> wheel_vel_cov_;
         Eigen::Matrix<double,3,3> camera_vel_cov_;
         Eigen::Matrix<double,3,3> gps_vel_cov_;
@@ -73,6 +74,9 @@ class HuskySystem {
 
         // Publish output path
         void logPoseTxt(const husky_inekf::HuskyState& state_);
+
+        void frictionEstimator(const husky_inekf::HuskyState& state_);
+        void slipEstimator(const husky_inekf::HuskyState& state_);
         // Output file
         std::string file_name_;
         std::string tum_file_name_;
@@ -99,6 +103,10 @@ class HuskySystem {
         int skip_count_;
 
         double last_imu_time_;
+
+        double mu;
+        int slip_flag=0;
+        double chi;
 };
 
 #endif // HUSKYSYSTEM_H

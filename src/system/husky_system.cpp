@@ -18,6 +18,7 @@ HuskySystem::HuskySystem(ros::NodeHandle* nh, husky_inekf::husky_data_t* husky_d
     // wheel velocity covariance
     nh_->param<double>("/noise/wheel_vel_std", std, 0.05);
     wheel_vel_cov_ = std * std * Eigen::Matrix<double,3,3>::Identity();
+    // wheel_vel_cov_.block<2,2>(1,1) = 0.02 * std * std * Eigen::Matrix<double,2,2>::Identity();
     
     // camera velocity covariance
     nh_->param<double>("/noise/camera_vel_std", std, 0.05);
@@ -51,6 +52,8 @@ HuskySystem::HuskySystem(ros::NodeHandle* nh, husky_inekf::husky_data_t* husky_d
         "vel_input.txt");
     nh_->param<std::string>("/settings/inekf_imu_file_name", imu_file_name_, 
         "imu.txt");
+
+    nh_->param<bool>("/settings/enable_friction_estimator", enable_friction_estimator, false);
 
     outfile_.open(file_name_,std::ofstream::out);
     vel_est_outfile_.open(vel_est_file_name_, std::ofstream::out);
@@ -105,6 +108,17 @@ void HuskySystem::step() {
 
         // update using body velocity from wheel encoders
         if (enable_wheel_vel_ && updateNextWheelVelocity()) {
+
+            auto disturbance_est = state_.getDisturbance();
+            double dist_x = disturbance_est(0);
+            double dist_y = disturbance_est(1);
+            double dist_z = disturbance_est(2);
+            double disturbance_abs = sqrt(dist_x*dist_x+dist_y*dist_y+dist_z*dist_z);
+
+            std::cout << "wheel_vel_cov_: " << wheel_vel_cov_ << std::endl;
+            wheel_vel_cov_.block<1,1>(0,0) = wheel_vel_cov_.block<1,1>(0,0) * exp(disturbance_abs);
+            std::cout << "wheel_vel_cov_: " << wheel_vel_cov_ << std::endl;
+
             estimator_.correctVelocity(*(wheel_velocity_packet_.get()),state_,wheel_vel_cov_);
             new_pose_ready_ = true;
 
@@ -142,8 +156,16 @@ void HuskySystem::step() {
 
         if (enable_pose_publisher_ && new_pose_ready_) {
             pose_publisher_node_.posePublish(state_);
-        }        
+        }
 
+
+        if(new_pose_ready_){
+            slipEstimator(state_);            
+        }
+
+        if (enable_friction_estimator && new_pose_ready_) {
+            frictionEstimator(state_);
+        }
         if (enable_pose_logger_ && new_pose_ready_){
             logPoseTxt(state_);
         }
@@ -185,6 +207,78 @@ void HuskySystem::step() {
 
 }
 
+void HuskySystem::frictionEstimator(const husky_inekf::HuskyState& state){
+
+    // Extract out current IMU data [w;a]
+    Eigen::Matrix<double,6,1> imu;
+    imu << imu_packet_->angular_velocity.x,
+           imu_packet_->angular_velocity.y, 
+           imu_packet_->angular_velocity.z,
+           imu_packet_->linear_acceleration.x, 
+           imu_packet_->linear_acceleration.y , 
+           imu_packet_->linear_acceleration.z;
+    double t = imu_packet_->getTime();
+
+    // Bias corrected IMU measurements
+    Eigen::Vector3d a = imu.tail(3) - state_.getImuBias().tail(3); // Linear Acceleration
+    Eigen::Matrix3d R = state_.getRotation();
+    Eigen::Vector3d g; g << 0,0,-9.81;
+    a = (R.transpose()*(R*a + g)).eval();
+
+    auto disturbance_est = state_.getDisturbance();
+    double dist_x = disturbance_est(0);
+    double dist_y = disturbance_est(1);
+    double dist_z = disturbance_est(2);
+    double disturbance_abs = sqrt(dist_x*dist_x+dist_y*dist_y+dist_z*dist_z);
+    double a_abs = sqrt(a(0)*a(0)+a(1)*a(1)+a(2)*a(2));
+
+    // std::cout << "time: " << t << " disturbance_abs: " << disturbance_abs << std::endl;
+
+    if (slip_flag){
+        mu = a_abs / 9.81;
+    }
+}
+
+void HuskySystem::slipEstimator(const husky_inekf::HuskyState& state){
+
+    // Extract out current IMU data [w;a]
+    Eigen::Matrix<double,6,1> imu;
+    imu << imu_packet_->angular_velocity.x,
+           imu_packet_->angular_velocity.y, 
+           imu_packet_->angular_velocity.z,
+           imu_packet_->linear_acceleration.x, 
+           imu_packet_->linear_acceleration.y , 
+           imu_packet_->linear_acceleration.z;
+    double t = imu_packet_->getTime();
+
+    // Bias corrected IMU measurements
+    Eigen::Vector3d a = imu.tail(3) - state_.getImuBias().tail(3); // Linear Acceleration
+    Eigen::Matrix3d R = state_.getRotation();
+    Eigen::Vector3d v = state_.getWorldVelocity();
+    Eigen::MatrixXd P = state_.getP();
+
+    Eigen::Vector3d measured_velocity = (*(wheel_velocity_packet_.get())).getLinearVelocity();
+
+    Eigen::MatrixXd H;
+    H.conservativeResize(3, 6);
+    H.block(0,0,3,3) = -R.transpose()*skew(v);
+    H.block(0,3,3,3) = R.transpose();
+
+    std::cout << " P.block(0,0,6,6): " <<  P.block(0,0,6,6) << std::endl;
+    Eigen::Matrix3d Sigma = H* P.block(0,0,6,6)* H.transpose();
+
+
+    chi = (measured_velocity - R.transpose()*v).transpose() * (Sigma + 0.01*Eigen::MatrixXd::Identity(3,3)).inverse()*(measured_velocity - R.transpose()*v);
+
+    std::cout << "chi: " << chi << std::endl;
+    if (chi>0.004) {
+        slip_flag = 1;
+    }
+    else{
+        slip_flag = 0;
+    }
+}
+
 void HuskySystem::logPoseTxt(const husky_inekf::HuskyState& state_) {
     if (skip_count_ == 0) {
         // ROS_INFO_STREAM("write new pose\n");
@@ -196,7 +290,8 @@ void HuskySystem::logPoseTxt(const husky_inekf::HuskyState& state_) {
         
         // log estimated velocity
         auto vel_est = state_.getWorldVelocity();
-        vel_est_outfile_ << t << " " << vel_est(0) << " " << vel_est(1) << " " << vel_est(2)<<std::endl<<std::flush;
+        auto vel_est_body = state_.getBodyVelocity();        
+        vel_est_outfile_ << t << " " << vel_est(0) << " " << vel_est(1) << " " << vel_est(2)<< " " << vel_est_body(0) << " " << vel_est_body(1)<< " " << vel_est_body(2)<<std::endl<<std::flush;
 
         // log estimated bias
         auto bias_est = state_.getImuBias();
@@ -205,7 +300,7 @@ void HuskySystem::logPoseTxt(const husky_inekf::HuskyState& state_) {
 
         // log estimated disturbance
         auto disturbance_est = state_.getDisturbance();
-        disturbance_est_outfile_ << t << " " << disturbance_est(0) << " " << disturbance_est(1) << " " << disturbance_est(2) << std::endl<<std::flush;
+        disturbance_est_outfile_ << t << " " << disturbance_est(0) << " " << disturbance_est(1) << " " << disturbance_est(2) << " " << mu << " " << slip_flag << " " <<  chi << std::endl<<std::flush;
 
         skip_count_ = log_pose_skip_;
     }

@@ -264,7 +264,7 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
 // InEKF Propagation - Inertial Data
 void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
 
-    double decaying_rate = 0.2;
+    double decaying_rate = 3;
 
     // Bias corrected IMU measurements
     Eigen::Vector3d w = imu.head(3)  - state_.getGyroscopeBias();    // Angular Velocity
@@ -365,7 +365,7 @@ void InEKF::CorrectRightInvariant(const Eigen::MatrixXd& Z, const Eigen::MatrixX
     // Compute state correction vector
     Eigen::VectorXd delta = K*Z;
     // delta(9) = 0;
-    // delta(10) = 0;
+    delta(10) = 0;
     delta(11) = 0;
 
     Eigen::MatrixXd dX = Exp_SEK3(delta.segment(0,delta.rows()-dimTheta));

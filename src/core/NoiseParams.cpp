@@ -36,7 +36,10 @@ void NoiseParams::setAccelerometerNoise(double std) { Qa_ = std*std*Eigen::Matri
 void NoiseParams::setAccelerometerNoise(const Eigen::Vector3d& std) { Qa_ << std(0)*std(0),0,0, 0,std(1)*std(1),0, 0,0,std(2)*std(2); }
 void NoiseParams::setAccelerometerNoise(const Eigen::Matrix3d& cov) { Qa_ = cov; } 
 
-void NoiseParams::setDisturbanceNoise(double std) { Qd_ = std*std*Eigen::Matrix3d::Identity(); }
+void NoiseParams::setDisturbanceNoise(double std) { 
+    Qd_ = std*std*Eigen::Matrix3d::Identity(); 
+    // Qd_.block<2,2>(1,1) = 0.00000000000000000000000000000001 * std * std * Eigen::Matrix<double,2,2>::Identity();
+}
 void NoiseParams::setDisturbanceNoise(const Eigen::Vector3d& std) { Qd_ << std(0)*std(0),0,0, 0,std(1)*std(1),0, 0,0,std(2)*std(2); }
 void NoiseParams::setDisturbanceNoise(const Eigen::Matrix3d& cov) { Qd_ = cov; } 
 

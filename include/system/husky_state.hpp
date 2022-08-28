@@ -101,6 +101,9 @@ class HuskyState {
         void setTime(double time_in){time_stamp_ = time_in;};
         double getTime() const{return time_stamp_;};
 
+        Eigen::MatrixXd getP() const;
+        void setP(const Eigen::MatrixXd& P);
+
         friend std::ostream& operator<<(std::ostream& os, const  HuskyState& obj);  
 
     private:
@@ -110,6 +113,7 @@ class HuskyState {
         Eigen::Matrix<double, 6,1> imu_bias_;
         Eigen::Matrix<double,4,1> GRF_; //!< ground reaction force
         Eigen::Matrix<double, 3,1> disturbance_; // disturbance 
+        Eigen::MatrixXd P_;
 };
 
 } // end namespace husky_inekf
