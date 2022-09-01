@@ -5,14 +5,14 @@ close all;
 clc
 
 clear
-vel_in = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/mars_sand2/wheel_vel_input.txt");
-bias_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/mars_sand2/wheel_bias_est.txt");
-vel_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/mars_sand2/wheel_vel_est.txt");
+vel_in = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_vel_input.txt");
+bias_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_bias_est.txt");
+vel_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_vel_est.txt");
 gt_pose = load("/home/xihang/Code/husky_inekf_plain/catkin_ws/src/husky_inekf/data/2022-05-11_mair_gt/1/trial1_rectangle_center.txt");
-est_pose = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/mars_sand2/inekf_wheel_vel.txt");
-disturbance = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/mars_sand2/wheel_disturbance_est.txt");
+est_pose = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/inekf_wheel_vel.txt");
+disturbance = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_disturbance_est.txt");
 t = est_pose(:,1);
-imu = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/mars_sand2/wheel_imu.txt");
+imu = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_imu.txt");
 
 
 
@@ -86,24 +86,24 @@ ylabel("m/s", "FontSize", 12)
 box on
 grid on
 
-%% slip flag
+%% slip flag - slip detection
 figure(8);
 
-% gt_time = linspace(0,120,12000);
-% gt_slip = zeros(1,12000);
-% gt_slip(667:1293)=1;
-% gt_slip(2593:3247)=1;
-% gt_slip(4594:5514)=1;
-% gt_slip(6947:7914)=1;
-% gt_slip(9501:10580)=1;
-% gt_slip(1687:2120)=1;
-% gt_slip(3700:4040)=1;
-% gt_slip(6040:6454)=1;
-% gt_slip(8507:8847)=1;
+gt_time = linspace(0,120,12000);
+gt_slip = zeros(1,12000);
+gt_slip(667:1293)=1;
+gt_slip(2593:3247)=1;
+gt_slip(4594:5514)=1;
+gt_slip(6947:7914)=1;
+gt_slip(9501:10580)=1;
+gt_slip(1687:2120)=1;
+gt_slip(3700:4040)=1;
+gt_slip(6040:6454)=1;
+gt_slip(8507:8847)=1;
 
 downsampled_disturbance = downsample(disturbance,60);
 
-% scatter(gt_time, gt_slip);
+scatter(gt_time, gt_slip);
 hold on
 scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,6),5);
 hold on
@@ -112,18 +112,50 @@ legend("$Slip (Ground Truth)$","$Slip (Estimation)$", 'FontSize',20, 'Interprete
 xlabel("$time(s)$", "FontSize", 12,'Interpreter','latex');
 ylabel("$Slip$", "FontSize", 12,'Interpreter','latex');
 ylim([-0.2,1.2]);
-% xlim([0,120]);
+% xlim([44,57]);
 box on
 grid on
 
 writematrix(downsampled_disturbance,"disturbance.txt");
 
+
+%% slip flag - DOB
+figure(91);
+
+gt_time = linspace(0,120,12000);
+gt_slip = zeros(1,12000);
+gt_slip(667:1293)=1;
+gt_slip(2593:3247)=1;
+gt_slip(4594:5514)=1;
+gt_slip(6947:7914)=1;
+gt_slip(9501:10580)=1;
+gt_slip(1687:2120)=1;
+gt_slip(3700:4040)=1;
+gt_slip(6040:6454)=1;
+gt_slip(8507:8847)=1;
+
+downsampled_disturbance = downsample(disturbance,60);
+
+scatter(gt_time, gt_slip);
+hold on
+scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,7),5);
+hold on
+
+legend("$Slip (Ground Truth)$","$Slip (Estimation)$", 'FontSize',20, 'Interpreter','latex');
+xlabel("$time(s)$", "FontSize", 12,'Interpreter','latex');
+ylabel("$Slip$", "FontSize", 12,'Interpreter','latex');
+ylim([-0.2,1.2]);
+% xlim([44,57]);
+box on
+grid on
+
+writematrix(downsampled_disturbance,"disturbance.txt");
 %% chi
 figure(8);
 
 t = disturbance(1:end,1)-disturbance(1,1);
 
-scatter(disturbance(1:end,1)-disturbance(1,1),disturbance(1:end,7),1,"+");
+scatter(disturbance(1:end,1)-disturbance(1,1),disturbance(1:end,8),1,"+");
 hold on
 
 legend("slip flag", 'FontSize',20);

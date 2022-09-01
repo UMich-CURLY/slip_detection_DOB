@@ -149,6 +149,10 @@ void BodyEstimator::correctVelocity(const VelocityMeasurement& velocity_packet_i
     double t = velocity_packet_in.getTime();
 
     if(std::abs(t-state.getTime())<velocity_t_thres_){
+
+        std::cout << "Noise parameters are initialized to: \n";
+        std::cout << filter_.getNoiseParams() << std::endl;
+
         inekf::RobotState estimate_old = filter_.getState();
         Eigen::Vector3d measured_velocity = velocity_packet_in.getLinearVelocity();
         filter_.CorrectVelocity(measured_velocity, velocity_cov);
@@ -272,6 +276,7 @@ void BodyEstimator::initState(const ImuMeasurement<double>& imu_packet_in,
     initial_state.setRotationCovariance(0.03*Eigen::Matrix3d::Identity());
     initial_state.setVelocityCovariance(0.01*Eigen::Matrix3d::Identity());
     initial_state.setPositionCovariance(0.00001*Eigen::Matrix3d::Identity());
+    initial_state.setDisturbanceContactVelCovariance(0.01*Eigen::Matrix3d::Identity()); 
     initial_state.setGyroscopeBiasCovariance(0.0001*Eigen::Matrix3d::Identity());
     initial_state.setAccelerometerBiasCovariance(0.0025*Eigen::Matrix3d::Identity());
     

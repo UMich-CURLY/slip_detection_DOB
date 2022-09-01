@@ -77,6 +77,7 @@ class HuskySystem {
 
         void frictionEstimator(const husky_inekf::HuskyState& state_);
         void slipEstimator(const husky_inekf::HuskyState& state_);
+        void slipEstimator_DOB(const husky_inekf::HuskyState& state_);
         // Output file
         std::string file_name_;
         std::string tum_file_name_;
@@ -105,7 +106,8 @@ class HuskySystem {
         double last_imu_time_;
 
         double mu;
-        int slip_flag=0;
+        int slip_flag_1=0;
+        int slip_flag_2=0;
         double chi;
 };
 
