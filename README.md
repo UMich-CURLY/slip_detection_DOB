@@ -1,30 +1,36 @@
-# husky_inekf
-This project contains an Invariant Kalman Filter system for wheeled robot state estimation. The InEKF takes in IMU measurement and body velocity estimation and estimates the robot's pose, velocity, and IMU biases.
+# Slip Detection (DOB)
+This project introduces a novel slip estimator using Disturbance Observer(DOB). A rigorous model for invariant ovserver that estimate slipping veolcity is built on top of an Invariant Kalman Filter system for wheeled robot state estimation. The DOB-based method provides stable slip event observer on different deformable terrain.
+
+<p align="center">
+  <img src="figures/mars_field.png" width="80%" />
+</p>
+<p align="center">
+  <img src="figures/mars_field_closer_look.png" width="80%" /> 
+</p>
+<p align="center">
+  <img src="figures/topdown.png" width="80%" />
+</p>
 
 ## Results
-<p float="left">
-  <img src="figures/husky_mair_setup.jpg" width="45%" />
-  <img src="figures/husky_mair_setup2.jpg" width="45%" /> 
-</p>
-<b>Figure 1:</b> Setup for the Husky experiments. Markers are attached on the robot body and a motion capture system is used to track the ground truth robot pose.
 
-<p float="left">
-  <img src="figures/husky_mair_M_trajectory_birdeye.png" width="85%" />
+<p align="center">
+  <img src="figures/result_figure_combination.png" width="85%" /> 
 </p>
 
-<b>Figure 2:</b> Estimated trajectory of the Husky robot on the grass M dataset. Dash line: ground truth trajectory from a motion capture system. Green line: InEKF result with velocity correction from wheel encoders. Blue line: InEKF result with velocity correction from the motion capture system.
+<strong>Figure 1:</strong> *[To be updated]*
 
 
-<p float="left">
-  <img src="figures/husky_mair_UM_trajectory_birdeye.png" width="85%" /> 
+<p align="center">
+  <img src="figures/slip_detection.png" width="85%" />
 </p>
 
-<b>Figure 3:</b> Estimated trajectory of the Husky robot on the grass UM dataset. Dash line: ground truth trajectory from a motion capture system. Green line: InEKF result with velocity correction from wheel encoders. Blue line: InEKF result with velocity correction from the motion capture system.
+<strong>Figure 2:</strong> *[To be updated]*
 
 ## Dependencies
 * ROS
 * Eigen3
 * Boost
+* (Any other?)
 
 ## Setup
 1. This project is a ROS package. 
@@ -86,6 +92,8 @@ The program support simultaneously correction from 3 different velocity topics. 
   
 * `velocity_time_threshold`: Threshold for time difference between the received velocity message and current time (sec). The message will be dropped if the time difference is larger than this threshold.
 
+* `enable_friction_estimator`: [To be updated]
+
 ### **Frame Definition**
 
 We assume the body frame to be at the imu position. (X pointing forward, Y to the left, Z pointing up.)
@@ -107,9 +115,40 @@ We provide functions to log the estimated pose, velocity, and biases.
 * `inekf_vel_est_file_name`: Path for the velocity log file.
   
 * `inekf_bias_est_file_name`: Path for the bias log file.
-  
-  
 
+We also provide toggles for input logger during your development:
+* `enable_debug_logger`: debug logger toggle. **true** will log the following files. **false** is used is production.
+
+* `inekf_vel_input_file_name`: Path for velocity input.
+
+* `inekf_imu_file_name`: Path for imu input.
+  
+### **ROS pose publisher**
+The following settings will be applied to ros publisher nodes:
+* `enable_pose_publisher`: Toggle for publisher nodes. Setting to **true** stands for publish pose topic and path topic, while **false** will skip publisher nodes.
+
+* `map_frame_id`: The frame where pose and path will be published to.
+
+* `base_frame_id`: [To be updated]
+
+* `pose_topic`: The topic of pose publisher node.
+
+* `path_topic`: The topic of path publisher node.
+
+* `publish_rate`: Rate of publishing.
+
+* `pose_skip`: number of poses to skip in path publisher node.
+
+### Noise settings can be modified in `config/noise.yaml`:
+
+* `gyroscope_std`: *[To be updated]*
+* `accelerometer_std`: *[To be updated]*
+* `gyroscope_bias_std`: *[To be updated]*
+* `accelerometer_bias_std`: *[To be updated]*
+* `wheel_vel_std`: *[To be updated]*
+* `camera_vel_std`: *[To be updated]*
+* `gps_vel_std`: *[To be updated]*
+* `disturbance_std`: *[To be updated]*
 
 ## Visualize InEKF in Rviz
 1. Start running the husky estimator using the instructions above
