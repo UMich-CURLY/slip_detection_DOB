@@ -20,20 +20,20 @@ using namespace std;
 
 // Default constructor
 RobotState::RobotState() : 
-    X_(Eigen::MatrixXd::Identity(5,5)), Theta_(Eigen::MatrixXd::Zero(6,1)),Disturbance_(Eigen::MatrixXd::Zero(3,1)), P_(Eigen::MatrixXd::Identity(18,18)) {}
+    X_(Eigen::MatrixXd::Identity(6,6)), Theta_(Eigen::MatrixXd::Zero(6,1)), P_(Eigen::MatrixXd::Identity(18,18)) {}
 // Initialize with X
 RobotState::RobotState(const Eigen::MatrixXd& X) : 
-    X_(X), Theta_(Eigen::MatrixXd::Zero(6,1)),Disturbance_(Eigen::MatrixXd::Zero(3,1)) {
+    X_(X), Theta_(Eigen::MatrixXd::Zero(6,1)) {
     P_ = Eigen::MatrixXd::Identity(3*this->dimX()+this->dimTheta()-6, 3*this->dimX()+this->dimTheta()-6);
 }
 // Initialize with X and Theta
 RobotState::RobotState(const Eigen::MatrixXd& X, const Eigen::VectorXd& Theta) : 
-    X_(X), Theta_(Theta),Disturbance_(Eigen::MatrixXd::Zero(3,1)) {
+    X_(X), Theta_(Theta) {
     P_ = Eigen::MatrixXd::Identity(3*this->dimX()+this->dimTheta()-6, 3*this->dimX()+this->dimTheta()-6);
 }
 // Initialize with X, Theta and P
 RobotState::RobotState(const Eigen::MatrixXd& X, const Eigen::VectorXd& Theta, const Eigen::MatrixXd& P) : 
-    X_(X), Theta_(Theta), P_(P),Disturbance_(Eigen::MatrixXd::Zero(3,1)) {}
+    X_(X), Theta_(Theta), P_(P){}
 // TODO: error checking to make sure dimensions are correct and supported
 
 const Eigen::MatrixXd RobotState::getX() const { return X_; }
@@ -42,22 +42,21 @@ const Eigen::MatrixXd RobotState::getP() const { return P_; }
 const Eigen::Matrix3d RobotState::getRotation() const { return X_.block<3,3>(0,0); }
 const Eigen::Vector3d RobotState::getVelocity() const { return X_.block<3,1>(0,3); }
 const Eigen::Vector3d RobotState::getPosition() const { return X_.block<3,1>(0,4); }
+const Eigen::Vector3d RobotState::getDisturbanceContactVel() const {return X_.block<3,1>(0,5); };
 const Eigen::Vector3d RobotState::getVector(int index) const { return X_.block<3,1>(0,index); }
 
 const Eigen::Vector3d RobotState::getGyroscopeBias() const { return Theta_.head(3); }
 const Eigen::Vector3d RobotState::getAccelerometerBias() const { return Theta_.tail(3); }
 
-const Eigen::Vector3d RobotState::getDisturbanceContactVel() const { return Disturbance_; };
 const Eigen::Matrix3d RobotState::getRotationCovariance() const { return P_.block<3,3>(0,0); }
 const Eigen::Matrix3d RobotState::getVelocityCovariance() const { return P_.block<3,3>(3,3); }
 const Eigen::Matrix3d RobotState::getPositionCovariance() const { return P_.block<3,3>(6,6); }
-const Eigen::Matrix3d RobotState::getGyroscopeBiasCovariance() const { return P_.block<3,3>(P_.rows()-9,P_.rows()-9); }
-const Eigen::Matrix3d RobotState::getAccelerometerBiasCovariance() const { return P_.block<3,3>(P_.rows()-6,P_.rows()-6); }
-const Eigen::Matrix3d RobotState::getDisturbanceContactVelCovariance() const { return P_.block<3,3>(P_.rows()-3,P_.rows()-3); }
+const Eigen::Matrix3d RobotState::getGyroscopeBiasCovariance() const { return P_.block<3,3>(P_.rows()-6,P_.rows()-6); }
+const Eigen::Matrix3d RobotState::getAccelerometerBiasCovariance() const { return P_.block<3,3>(P_.rows()-3,P_.rows()-3); }
+const Eigen::Matrix3d RobotState::getDisturbanceContactVelCovariance() const { return P_.block<3,3>(9, 9); }
 
 const int RobotState::dimX() const { return X_.cols(); }
 const int RobotState::dimTheta() const {return Theta_.rows();}
-const int RobotState::dimDisturbance() const {return Disturbance_.rows();}
 const int RobotState::dimP() const { return P_.cols(); }
 
 
@@ -130,15 +129,17 @@ void RobotState::setP(const Eigen::MatrixXd& P) { P_ = P; }
 void RobotState::setRotation(const Eigen::Matrix3d& R) { X_.block<3,3>(0,0) = R; }
 void RobotState::setVelocity(const Eigen::Vector3d& v) { X_.block<3,1>(0,3) = v; }
 void RobotState::setPosition(const Eigen::Vector3d& p) { X_.block<3,1>(0,4) = p; }
+void RobotState::setDisturbanceContactVel(const Eigen::Vector3d& d) {X_.block<3,1>(0,5) = d; } // disturbance
 void RobotState::setGyroscopeBias(const Eigen::Vector3d& bg) { Theta_.head(3) = bg; }
 void RobotState::setAccelerometerBias(const Eigen::Vector3d& ba) { Theta_.tail(3) = ba; }
-void RobotState::setDisturbanceContactVel(const Eigen::Vector3d& d) {Disturbance_ = d;} // disturbance
+
 void RobotState::setRotationCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(0,0) = cov; }
 void RobotState::setVelocityCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(3,3) = cov; }
 void RobotState::setPositionCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(6,6) = cov; }
-void RobotState::setGyroscopeBiasCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(P_.rows()-9,P_.rows()-9) = cov; }
-void RobotState::setAccelerometerBiasCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(P_.rows()-6,P_.rows()-6) = cov; }
-void RobotState::setDisturbanceContactVelCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(P_.rows()-3,P_.rows()-3) = cov; }
+void RobotState::setDisturbanceContactVelCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(9,9) = cov; }
+void RobotState::setGyroscopeBiasCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(P_.rows()-6,P_.rows()-6) = cov; }
+void RobotState::setAccelerometerBiasCovariance(const Eigen::Matrix3d& cov) { P_.block<3,3>(P_.rows()-3,P_.rows()-3) = cov; }
+
 
 void RobotState::copyDiagX(int n, Eigen::MatrixXd& BigX) const {
     int dimX = this->dimX();
@@ -181,7 +182,6 @@ ostream& operator<<(ostream& os, const RobotState& s) {
     os << "--------- Robot State -------------" << endl;
     os << "X:\n" << s.X_ << endl << endl;
     os << "Theta:\n" << s.Theta_ << endl << endl;
-    os << "Disturbance:\n" << s.Disturbance_ << endl << endl;
     // os << "P:\n" << s.P_ << endl;
     os << "-----------------------------------";
     return os;  

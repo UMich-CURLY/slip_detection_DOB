@@ -119,7 +119,7 @@ void InEKF::setMagneticField(Eigen::Vector3d& true_magnetic_field) { magnetic_fi
 Eigen::Vector3d InEKF::getMagneticField() const { return magnetic_field_; }
 
 // Compute Analytical state transition matrix
-Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d& a, double dt) {
+Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d& a,double decaying_rate, double dt) {
     Eigen::Vector3d phi = w*dt;
     Eigen::Matrix3d G0 = Gamma_SO3(phi,0); // Computation can be sped up by computing G0,G1,G2 all at once
     Eigen::Matrix3d G1 = Gamma_SO3(phi,1); // TODO: These are also needed for the mean propagation, we should not compute twice
@@ -211,6 +211,7 @@ Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d
         Phi.block<3,3>(3,0) = gx*dt; // Phi_21
         Phi.block<3,3>(6,0) = 0.5*gx*dt2; // Phi_31
         Phi.block<3,3>(6,3) = Eigen::Matrix3d::Identity()*dt; // Phi_32
+        Phi.block<3,3>(9,9) = Eigen::Matrix3d::Identity()*exp(-decaying_rate * dt); // (1-decaying_rate*dt+0.5*decaying_rate*decaying_rate*dt2);
         Phi.block<3,3>(0,dimP-dimTheta) = -RG1dt; // Phi_15
         Phi.block<3,3>(3,dimP-dimTheta) = -skew(v+RG1dt*a+g_*dt)*RG1dt + RG0*Phi25L; // Phi_25
         Phi.block<3,3>(6,dimP-dimTheta) = -skew(p+v*dt+RG2dt2*a+0.5*g_*dt2)*RG1dt + RG0*Phi35L; // Phi_35
@@ -220,6 +221,7 @@ Eigen::MatrixXd InEKF::StateTransitionMatrix(Eigen::Vector3d& w, Eigen::Vector3d
         Phi.block<3,3>(3,dimP-dimTheta+3) = -RG1dt; // Phi_26
         Phi.block<3,3>(6,dimP-dimTheta+3) = -RG2dt2; // Phi_36
     }
+
     return Phi;
 }
 
@@ -241,15 +243,20 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
     Eigen::MatrixXd Qc = Eigen::MatrixXd::Zero(dimP,dimP); // Landmark noise terms will remain zero
     Qc.block<3,3>(0,0) = noise_params_.getGyroscopeCov(); 
     Qc.block<3,3>(3,3) = noise_params_.getAccelerometerCov();
-    for(map<int,int>::iterator it=estimated_contact_positions_.begin(); it!=estimated_contact_positions_.end(); ++it) {
-        Qc.block<3,3>(3+3*(it->second-3),3+3*(it->second-3)) = noise_params_.getContactCov(); // Contact noise terms
-    } // TODO: Use kinematic orientation to map noise from contact frame to body frame (not needed if noise is isotropic)
+
+    Qc.block<3,3>(9,9) = noise_params_.getDisturbanceCov();
+
+    // for(map<int,int>::iterator it=estimated_contact_positions_.begin(); it!=estimated_contact_positions_.end(); ++it) {
+    //     Qc.block<3,3>(3+3*(it->second-3),3+3*(it->second-3)) = noise_params_.getContactCov(); // Contact noise terms
+    // } // TODO: Use kinematic orientation to map noise from contact frame to body frame (not needed if noise is isotropic)
     Qc.block<3,3>(dimP-dimTheta,dimP-dimTheta) = noise_params_.getGyroscopeBiasCov();
     Qc.block<3,3>(dimP-dimTheta+3,dimP-dimTheta+3) = noise_params_.getAccelerometerBiasCov();
+
 
     // Noise Covariance Discretization
     Eigen::MatrixXd PhiG = Phi * G;
     Eigen::MatrixXd Qd = PhiG * Qc * PhiG.transpose() * dt; // Approximated discretized noise matrix (TODO: compute analytical)
+
     return Qd;
 }
 
@@ -257,7 +264,7 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
 // InEKF Propagation - Inertial Data
 void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
 
-    int decrease_rate = 1.2;
+    double decaying_rate = 2.5;
 
     // Bias corrected IMU measurements
     Eigen::Vector3d w = imu.head(3)  - state_.getGyroscopeBias();    // Angular Velocity
@@ -267,22 +274,22 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
     Eigen::MatrixXd X = state_.getX();
     Eigen::MatrixXd Xinv = state_.Xinv();
     Eigen::MatrixXd P = state_.getP();
-    Eigen::VectorXd disturbance = state_.getDisturbanceContactVel();
+
     int dimX = state_.dimX();
     int dimP = state_.dimP();
     int dimTheta = state_.dimTheta();
-    int dimDisturbance = state_.dimDisturbance();
-    
-
     //  ------------ Propagate Covariance --------------- //
-    Eigen::MatrixXd Phi = this->StateTransitionMatrix(w,a,dt);
+    Eigen::MatrixXd Phi = this->StateTransitionMatrix(w,a,decaying_rate,dt);
     Eigen::MatrixXd Qd = this->DiscreteNoiseMatrix(Phi, dt);
+    std::cout << "Qd: " << Qd << std::endl;
+    std::cout << "Phi * P * Phi.transpose(): " << Phi * P * Phi.transpose() << std::endl;
     Eigen::MatrixXd P_pred = Phi * P * Phi.transpose() + Qd;
 
     //  ------------ Propagate Mean --------------- // 
     Eigen::Matrix3d R = state_.getRotation();
     Eigen::Vector3d v = state_.getVelocity();
     Eigen::Vector3d p = state_.getPosition();
+    Eigen::VectorXd disturbance = state_.getDisturbanceContactVel();
 
     Eigen::Vector3d phi = w*dt;
     Eigen::Matrix3d G0 = Gamma_SO3(phi,0); // Computation can be sped up by computing G0,G1,G2 all at once
@@ -295,7 +302,12 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
         X_pred.block<3,3>(0,0) = R * G0;
         X_pred.block<3,1>(0,3) = v + (R*G1*a + g_)*dt;
         X_pred.block<3,1>(0,4) = p + v*dt + (R*G2*a + 0.5*g_)*dt*dt;
-        disturbance = disturbance * exp(-decrease_rate*dt);
+        std::cout << "The matrix X-1.1 is: \n" << X << std::endl;
+        std::cout << "The matrix dt is: \n" << dt << std::endl;    
+        std::cout << "The matrix decaying_rate*dt is: \n" << decaying_rate*dt << std::endl;    
+        std::cout << "The matrix exp(-decaying_rate*dt) is: \n" << exp(-decaying_rate*dt) << std::endl;
+        X_pred.block<3,1>(0,5) = disturbance * exp(-decaying_rate*dt);
+        std::cout << "The matrix X-1.2 is: \n" << X << std::endl;    
     } else {
         // Propagate body-centric state estimate
         Eigen::MatrixXd X_pred = X;
@@ -308,9 +320,10 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
         }
     } 
 
+
+
     //  ------------ Update State --------------- // 
     state_.setX(X_pred);
-    state_.setDisturbanceContactVel(disturbance);
     state_.setP(P_pred);      
 }
 
@@ -320,11 +333,9 @@ void InEKF::CorrectRightInvariant(const Eigen::MatrixXd& Z, const Eigen::MatrixX
     // Get current state estimate
     Eigen::MatrixXd X = state_.getX();
     Eigen::VectorXd Theta = state_.getTheta();
-    Eigen::VectorXd Disturbance = state_.getDisturbanceContactVel();
     Eigen::MatrixXd P = state_.getP();
     int dimX = state_.dimX();
     int dimTheta = state_.dimTheta();
-    int dimDisturbance = state_.dimDisturbance();
     int dimP = state_.dimP();
 
     // Remove bias
@@ -341,51 +352,49 @@ void InEKF::CorrectRightInvariant(const Eigen::MatrixXd& Z, const Eigen::MatrixX
     Eigen::MatrixXd K = PHT * S.inverse();
 
     std::string sep = "\n----------------------------------------\n";
-    std::cout << "The matrix X is: \n" << X << sep << std::endl;
-    std::cout << "The matrix K is: \n" << K << sep << std::endl;
-    std::cout << "The matrix Z is: \n" << Z << sep << std::endl;
-    std::cout << "The matrix N is: \n" << N << sep << std::endl;
-    std::cout << "The matrix H is: \n" << H << sep << std::endl;
+    std::cout << "The matrix X-2 is: \n" << X << sep << std::endl;
+    // std::cout << "The matrix K is: \n" << K << sep << std::endl;
+    // std::cout << "The matrix Z is: \n" << Z << sep << std::endl;
+    // std::cout << "The matrix N is: \n" << N << sep << std::endl;
+    // std::cout << "The matrix H is: \n" << H << sep << std::endl;
     std::cout << "The matrix P is: \n" << P << sep << std::endl;
-    std::cout << "The matrix PHT is: \n" << PHT << sep << std::endl;
-    std::cout << "The matrix S is: \n" << S << sep << std::endl;
+    // std::cout << "The matrix PHT is: \n" << PHT << sep << std::endl;
+    // std::cout << "The matrix S is: \n" << S << sep << std::endl;
     
 
     // Compute state correction vector
     Eigen::VectorXd delta = K*Z;
-    Eigen::MatrixXd dX = Exp_SEK3(delta.segment(0,delta.rows()-dimTheta-dimDisturbance));
-    Eigen::VectorXd dTheta = delta.segment(delta.rows()-dimTheta-dimDisturbance, dimTheta);
-    Eigen::VectorXd dDisturbance = delta.segment(delta.rows()-dimDisturbance, dimDisturbance);
+    // delta(9) = 0;
+    // delta(10) = 0;
+    // delta(11) = 0;
+
+    Eigen::MatrixXd dX = Exp_SEK3(delta.segment(0,delta.rows()-dimTheta));
+
+    Eigen::VectorXd dTheta = delta.segment(delta.rows()-dimTheta, dimTheta);
     
     // Update state
     Eigen::MatrixXd X_new = dX*X; // Right-Invariant Update
-
-    
     
     /// CHANGEBACK: remember to change the factor back to 1:
     // double alpha = 0;
     // dTheta *= alpha;
     /// REMARK: set yaw bias derivative estimation to 0
     dTheta(2) = 0;
-    // std::cout << dTheta << "\n" << std::endl;
+
+    std::cout << dTheta << "\n" << std::endl;
     Eigen::VectorXd Theta_new = Theta + dTheta;
-    dDisturbance(2) = 0;
-    dDisturbance(0) = 0;
-    dDisturbance(1) = 0;
-    Eigen::VectorXd Disturbance_new = Disturbance + dDisturbance;
 
 
     // Set new state  
     state_.setX(X_new); 
     state_.setTheta(Theta_new);
-    state_.setDisturbanceContactVel(Disturbance_new);
 
     // Update Covariance
     Eigen::MatrixXd IKH = Eigen::MatrixXd::Identity(dimP,dimP) - K*H;
     Eigen::MatrixXd P_new = IKH * P * IKH.transpose() + K*N*K.transpose(); // Joseph update form
 
-    P_new.row(dimP-dimTheta-dimDisturbance+2).setZero();
-    P_new.col(dimP-dimTheta-dimDisturbance+2).setZero();
+    P_new.row(dimP-dimTheta+2).setZero();
+    P_new.col(dimP-dimTheta+2).setZero();
     P_new(dimP-dimTheta+2, dimP-dimTheta+2) = 0.0001*1;
     // Set new covariance
     state_.setP(P_new); 
@@ -886,7 +895,8 @@ void InEKF::CorrectVelocity(const Eigen::Vector3d& measured_velocity, const Eige
     // Fill out H
     H.conservativeResize(3, dimP);
     H.block(0,0,3,dimP) = Eigen::MatrixXd::Zero(3,dimP);
-    H.block(0,3,3,3) = Eigen::Matrix3d::Identity(); 
+    H.block(0,3,3,3) = Eigen::Matrix3d::Identity();
+    H.block(0,9,3,3) = Eigen::Matrix3d::Identity(); 
 
     // Fill out N
     N.conservativeResize(3, 3);
@@ -901,11 +911,17 @@ void InEKF::CorrectVelocity(const Eigen::Vector3d& measured_velocity, const Eige
     // Z = X*Y-b = PI*X*Y 
     Eigen::Matrix3d R = state_.getRotation();
     Eigen::Vector3d v = state_.getVelocity();
+    Eigen::Vector3d disturbance = state_.getDisturbanceContactVel();
 
+    std::cout << "R: " << R << std::endl;
+    std::cout << "v: " << v << std::endl;
+    std::cout << "disturbance: " << disturbance << std::endl;
+    std::cout << "measured_velocity: " << measured_velocity << std::endl;
 
     int startIndex = Z.rows();
     Z.conservativeResize(startIndex+3, Eigen::NoChange);
-    Z.segment(0,3) = R*measured_velocity - v; 
+    Z.segment(0,3) = R*measured_velocity - v - disturbance;
+    // Z.segment(0,3) = R*measured_velocity - v;
 
 
     // Correct state using stacked observation
