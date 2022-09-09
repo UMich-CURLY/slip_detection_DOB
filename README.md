@@ -30,7 +30,7 @@ This project introduces a novel slip estimator using Disturbance Observer(DOB). 
 * ROS
 * Eigen3
 * Boost
-* (Any other?)
+* *[To be updated]*
 
 ## Setup
 1. This project is a ROS package. 
