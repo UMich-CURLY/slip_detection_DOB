@@ -41,7 +41,7 @@ cd ~/${PATH_TO}/catkin_ws/
 catkin_make -j8
 source devel/setup.bash
 ```
-1. To run the program, you can use the following command:
+2. To run the program, you can use the following command:
 ```
 roslaunch husky_inekf husky_estimator.launch
 ```
