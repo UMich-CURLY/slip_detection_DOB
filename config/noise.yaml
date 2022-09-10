@@ -6,5 +6,5 @@ noise:
   wheel_vel_std: 1  # std for wheel velocity
   camera_vel_std: 0.1
   gps_vel_std: 0.1
-  disturbance_std: 4.5
+  disturbance_std: 9
   

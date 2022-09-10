@@ -19,10 +19,18 @@ class PosePublisherNode{
 
         // Publishes pose
         void posePublish(const husky_inekf::HuskyState& state_);
+        void velPublish(const husky_inekf::HuskyState& state_);
+        void slipPublish(const husky_inekf::HuskyState& state_);
+        void slipFlagPublish(const husky_inekf::HuskyState& state_);
 
     private:
         ros::NodeHandle* n_;
+        
         ros::Publisher pose_pub_;
+        ros::Publisher vel_pub_;
+        ros::Publisher slip_pub_;
+        ros::Publisher slip_flag_pub_;
+
         std::string pose_frame_;
         uint32_t seq_ = 0;
         double publish_rate_;
