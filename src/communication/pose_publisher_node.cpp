@@ -4,7 +4,7 @@ PosePublisherNode::PosePublisherNode(ros::NodeHandle* n) : n_(n) {
     // Create private node handle
     ros::NodeHandle nh("~");
     // std::string pose_csv_file, init_rot_file;
-    std::string pose_topic, pose_frame, slip_topic, vel_topic, slip_flag_topic;
+    std::string pose_topic, pose_frame, base_link, slip_topic, vel_topic, slip_flag_topic;
 
     nh.param<std::string>("/settings/pose_topic", pose_topic, "/husky/inekf_estimation/pose");
     nh.param<std::string>("/settings/slip_topic", slip_topic, "/husky/inekf_estimation/slip");
@@ -13,12 +13,15 @@ PosePublisherNode::PosePublisherNode(ros::NodeHandle* n) : n_(n) {
 
 
     nh.param<std::string>("/settings/map_frame_id", pose_frame, "/odom");
+    nh.param<std::string>("/settings/base_link", base_link, "/base_link");
+
     nh.param<double>("/settings/publish_rate", publish_rate_, 1000); 
     nh.param<int>("/settings/pose_skip", pose_skip_, 0); 
     first_pose_ = {0, 0, 0};
     // first_pose_ = pose_from_csv_.front();
     // std::cout<<"first pose is: "<<first_pose_[0]<<", "<<first_pose_[1]<<", "<<first_pose_[2]<<std::endl;
     pose_frame_ = pose_frame;
+    base_link_frame_ = base_link;
     
     pose_pub_ = n_->advertise<geometry_msgs::PoseWithCovarianceStamped>(pose_topic, 1000);
     slip_pub_ = n_->advertise<geometry_msgs::Vector3Stamped>(slip_topic, 1000);
@@ -36,11 +39,7 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
 
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.seq = seq_;
-    pose_msg.header.stamp = ros::Time::now();
-
-    ros::Time stamp = ros::Time::now();
-
-
+    pose_msg.header.stamp = ros::Time(state_.getTime());
     pose_msg.header.frame_id = pose_frame_;
     pose_msg.pose.pose.position.x = state_.x() - first_pose_[0];
     pose_msg.pose.pose.position.y = state_.y() - first_pose_[1];
@@ -51,6 +50,14 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
     pose_msg.pose.pose.orientation.z = state_.getQuaternion().z();
     // std::cout<<"publishing: "<<pose_msg.pose.pose.position.x<<", "<<pose_msg.pose.pose.position.y<<", "<<pose_msg.pose.pose.position.z<<std::endl;
     pose_pub_.publish(pose_msg);
+
+    // Publish TF
+    tf::Transform transform;
+    static tf::TransformBroadcaster br;
+    transform.setOrigin(tf::Vector3(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z));
+    transform.setRotation(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
+    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,pose_frame_,base_link_frame_));
+
     seq_++;
 }
 
