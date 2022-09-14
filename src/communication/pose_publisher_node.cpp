@@ -62,21 +62,41 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
     // Publish TF
     tf::Transform transform;
     static tf::TransformBroadcaster br;
-    transform.setOrigin(tf::Vector3(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z));
-    transform.setRotation(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
-    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,pose_frame_,base_link_frame_));
+    // transform.setOrigin(tf::Vector3(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z));
+    // transform.setRotation(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,pose_frame_,base_link_frame_));
     
-    transform.setOrigin(tf::Vector3(0.0812, 0.0, 0.245));
-    transform.setRotation(tf::Quaternion(0, 0, 0, 1));
-    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,base_link_frame_,top_plate_link_frame_));
+    // transform.setOrigin(tf::Vector3(0.0812, 0.0, 0.245));
+    // transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,base_link_frame_,top_plate_link_frame_));
 
-    transform.setOrigin(tf::Vector3(0, 0, 0));
-    transform.setRotation(tf::Quaternion(0, 0, 0, 1));
-    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,top_plate_link_frame_, sensor_arch_frame_));
+    // transform.setOrigin(tf::Vector3(0, 0, 0));
+    // transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,top_plate_link_frame_, sensor_arch_frame_));
 
-    transform.setOrigin(tf::Vector3(-0.0725, 0, 0.5227));
-    transform.setRotation(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
-    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,sensor_arch_frame_, velodyne_frame_));
+    // transform.setOrigin(tf::Vector3(-0.0725, 0, 0.5227));
+    // transform.setRotation(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,sensor_arch_frame_, velodyne_frame_));
+
+    // transform.setOrigin(tf::Vector3(0.0087, 0, 0.7677));
+    // transform.setRotation(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,base_link_frame_, velodyne_frame_));
+
+    tf::Matrix3x3 R1(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
+    tf::Vector3 v1(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z);
+
+    tf::Matrix3x3 R2(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
+    tf::Vector3 v2(0.0087, 0, 0.7677);
+
+    tf::Matrix3x3 R3 = R1 * R2;
+    tf::Vector3 v3 = R1*v2 + v1;
+
+    tf::Quaternion q3;
+    R3.getRotation(q3);
+
+    transform.setRotation(q3);
+    transform.setOrigin(v3);
+    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,pose_frame_, velodyne_frame_));
 
     seq_++;
 }
