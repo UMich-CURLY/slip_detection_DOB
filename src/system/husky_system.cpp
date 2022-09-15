@@ -265,16 +265,19 @@ void HuskySystem::slipEstimator(husky_inekf::HuskyState& state){
     Eigen::Vector3d measured_velocity = (*(wheel_velocity_packet_.get())).getLinearVelocity();
 
     Eigen::MatrixXd G;
-    G.conservativeResize(3, 6);
-    G.block(0,0,3,3) = -R.transpose()*skew(v);
-    G.block(0,3,3,3) = R.transpose();
+    G.conservativeResize(3, 3);
+    G.block(0,0,3,3) = R.transpose();
 
-    Eigen::Matrix3d Sigma = G* P.block(0,0,6,6)* G.transpose();
+    Eigen::Matrix3d Sigma = G* P.block(3,3,3,3)* G.transpose();
+
+    std::cout << "P.block(3,3,3,3): " << P.block(3,3,3,3) << std::endl;
+    std::cout << "Sigma: " << Sigma << std::endl;
+    std::cout << "0.0001*Eigen::MatrixXd::Identity(3,3): " << 0.0001*Eigen::MatrixXd::Identity(3,3) << std::endl;
 
 
     chi = (measured_velocity - R.transpose()*v).transpose() * (Sigma + 0.0001*Eigen::MatrixXd::Identity(3,3)).inverse()*(measured_velocity - R.transpose()*v);
-
-    if (chi>0.007) {
+    std::cout << "chi: "  << chi << std::endl;
+    if (chi>4.642) {
         slip_flag_1 = 1;
     }
     else{
@@ -306,24 +309,22 @@ void HuskySystem::slipEstimator_SlipModel(const husky_inekf::HuskyState& state){
     Eigen::Vector3d measured_velocity = (*(wheel_velocity_packet_.get())).getLinearVelocity();
 
     Eigen::MatrixXd G;
-    G.conservativeResize(3, 9);
-    G.block(0,0,3,3) = -R.transpose()*skew(v)-R.transpose()*skew(disturbance);
+    G.conservativeResize(3, 6);
+    G.block(0,0,3,3) = R.transpose();
     G.block(0,3,3,3) = R.transpose();
-    G.block(0,6,3,3) = R.transpose();
 
     Eigen::MatrixXd Cov;
-    Cov.conservativeResize(9, 9);
-    Cov.block(0,0,6,6) = P.block(0,0,6,6);
-    Cov.block(0,6,6,3) = P.block(0,9,6,3);
-    Cov.block(6,0,3,6) = P.block(9,0,3,6);
-    Cov.block(6,6,3,3) = P.block(9,9,3,3);
+    Cov.conservativeResize(6, 6);
+    Cov.block(0,0,3,3) = P.block(3,3,3,3);
+    Cov.block(0,3,3,3) = P.block(0,9,3,3);
+    Cov.block(3,0,3,3) = P.block(9,0,3,3);
+    Cov.block(3,3,3,3) = P.block(9,9,3,3);
 
     Eigen::Matrix3d Sigma = G * Cov * G.transpose();
 
-
     chi_2 = (measured_velocity - R.transpose()*v - R.transpose()*disturbance).transpose() * (Sigma + 0.0001*Eigen::MatrixXd::Identity(3,3)).inverse()*(measured_velocity - R.transpose()*v - R.transpose()*disturbance);
 
-    if (chi_2>0.007) {
+    if (chi_2>4.642) {
         slip_flag_2 = 1;
     }
     else{
