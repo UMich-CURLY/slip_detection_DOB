@@ -49,9 +49,9 @@ settings:
                                       # and current time. (sec) 
   estimator_enable_debug: false
 
-  enable_friction_estimator: true
+  enable_friction_estimator: false
 
-  enable_cov_adaptation: false
+  enable_cov_adaptation: true
 
   decaying_rate: 2.5
 

@@ -94,6 +94,8 @@ The program support simultaneously correction from 3 different velocity topics. 
 
 * `enable_friction_estimator`: <span style="color:grey;">[To be updated in future development]</span>
 
+* `enable_cov_adaptation`: Enable covariance adaptation in state estimator
+
 ### **Frame Definition**
 
 We assume the body frame to be at the imu position. (X pointing forward, Y to the left, Z pointing up.)
