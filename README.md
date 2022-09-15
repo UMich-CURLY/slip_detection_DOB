@@ -9,19 +9,19 @@ This project introduces a novel slip estimator using Disturbance Observer(DOB). 
 </p>
 <p align="center">
   <img src="figures/husky.png" alt="Definition of coordinates" width=80% style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
-  <p align="justify"><strong>Figure 1:</strong> Experimental wheeled robot platform Husky. The world frame W is a fixed frame. We define the body frame B as x pointing forward, y point to the left of the vehicle, and z derived from the right hand rule. We obtain angular velocity measurements ωl and ωr from the wheel encoders. Using an inertial measurement unit and wheel encoders measurements, the proposed method estimates the body velocity, slip velocity, robot orientation and position, visualized as v, u, R, and p, respectively.</p>
+  <p align="justify"><strong>Figure 1:</strong> Experimental wheeled robot platform Husky. The world frame $W$ is a fixed frame. We define the body frame $B$ as $x$ pointing forward, $y$ point to the left of the vehicle, and $z$ derived from the right hand rule. We obtain angular velocity measurements $ω_l$ and $ω_r$ from the wheel encoders. Using an inertial measurement unit and wheel encoders measurements, the proposed method estimates the body velocity, slip velocity, robot orientation and position, visualized as $v$, $u$, $R$, and $p$, respectively.</p>
 </p>
 
 ## Results
 
 <p align="center">
   <img src="figures/vel_ori_44_57.png" alt="Result plots" width=80% style="display: block; margin-left:auto; margin-right:auto; width=50%"/> 
-  <p align="justify"><strong>Figure 2: </strong>Yaw, pitch and roll angles of the main body are depicted in the left three figures. Body Velocities are depicted in the right three figures. Black: ground truth from ORB-SLAM3di system. Blue dashes: plain InEKF without DOB. Red dashes: InEKF with DOB.</p>
+  <p align="justify"><strong>Figure 2: </strong>Yaw, pitch and roll angles of the main body are depicted in the left three figures. Body Velocities are depicted in the right three figures. <strong><em>Black:</em></strong> ground truth from ORB-SLAM3di system. <strong><em>Blue dashes:</em></strong> plain InEKF without DOB. <strong><em>Red dashes:</em></strong> InEKF with DOB.</p>
 </p>
 
 <p align="center">
   <img src="figures/slip_state.png" alt="Slip detection plot" width=80% style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
-  <p align="justify"><strong>Figure 3: </strong>Slip state estimation from sequence over slippery soap terrain. Red dots: Detected slip event during which robot is slipping. Blue bar: Ground truth during which robot is slipping.</p>
+  <p align="justify"><strong>Figure 3: </strong>Slip state estimation from sequence over slippery soap terrain. <strong><em>Red dots:</em></strong> Detected slip event during which robot is slipping. <strong><em>Blue bar:</em></strong> Ground truth during which robot is slipping.</p>
 </p>
 
 
