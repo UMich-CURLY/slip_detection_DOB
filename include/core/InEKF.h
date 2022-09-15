@@ -185,7 +185,7 @@ the default.
          * @param imu: 6x1 vector containing stacked angular velocity and linear acceleration measurements
          * @param dt: double indicating how long to integrate the inertial measurements for
          */
-        void Propagate(const Eigen::Matrix<double,6,1>& imu, double dt);
+        void Propagate(const Eigen::Matrix<double,6,1>& imu, double dt, double decaying_rate);
         /** 
          * Corrects the state estimate using the measured forward kinematics between the IMU and a set of contact frames.
          * If contact is indicated but not included in the state, the state is augmented to include the estimated contact position.

@@ -97,55 +97,54 @@ gt_slip(4594:5514)=1;
 gt_slip(6947:7914)=1;
 gt_slip(9501:10580)=1;
 gt_slip(1687:2120)=1;
-gt_slip(3700:4040)=1;
+% gt_slip(3700:4040)=1;
 gt_slip(6040:6454)=1;
 gt_slip(8507:8847)=1;
 
-downsampled_disturbance = downsample(disturbance,60);
+downsampled_disturbance = downsample(disturbance,25);
 
-scatter(gt_time, gt_slip);
+lightBlue = [0 0.4470 0.7410];
+
+subplot(1,2,1)
+% scatter(gt_time, gt_slip);
+area(gt_time, gt_slip,'FaceColor',lightBlue,'EdgeColor', 'none');
+
 hold on
-scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,6),5);
+scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,6),8,'filled');
+% scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,7),5);
+% area(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,6));
+
 hold on
 
-legend("$Slip (Ground Truth)$","$Slip (Estimation)$", 'FontSize',20, 'Interpreter','latex');
+legend("$Slip$ (GT)","$Slip$ (Chi-Square Test)", 'FontSize',20, 'Interpreter','latex');
 xlabel("$time(s)$", "FontSize", 12,'Interpreter','latex');
 ylabel("$Slip$", "FontSize", 12,'Interpreter','latex');
 ylim([-0.2,1.2]);
-% xlim([44,57]);
+xlim([0,120]);
 box on
 grid on
 
 writematrix(downsampled_disturbance,"disturbance.txt");
 
 
-%% slip flag - DOB
-figure(91);
+subplot(1,2,2)
+lightBlue = [0 0.4470 0.7410];
 
-gt_time = linspace(0,120,12000);
-gt_slip = zeros(1,12000);
-gt_slip(667:1293)=1;
-gt_slip(2593:3247)=1;
-gt_slip(4594:5514)=1;
-gt_slip(6947:7914)=1;
-gt_slip(9501:10580)=1;
-gt_slip(1687:2120)=1;
-gt_slip(3700:4040)=1;
-gt_slip(6040:6454)=1;
-gt_slip(8507:8847)=1;
+downsampled_disturbance_2 = downsample(disturbance,100);
 
-downsampled_disturbance = downsample(disturbance,60);
-
-scatter(gt_time, gt_slip);
-hold on
-scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,7),5);
+% scatter(gt_time, gt_slip);
+% area(gt_time, gt_slip,'FaceColor',lightBlue,'EdgeColor', 'none');
+boxchart(downsampled_disturbance_2(1:end,7));
 hold on
 
-legend("$Slip (Ground Truth)$","$Slip (Estimation)$", 'FontSize',20, 'Interpreter','latex');
-xlabel("$time(s)$", "FontSize", 12,'Interpreter','latex');
-ylabel("$Slip$", "FontSize", 12,'Interpreter','latex');
-ylim([-0.2,1.2]);
-% xlim([44,57]);
+% scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,7),8,[0.4940 0.1840 0.5560],'filled');
+% hold on
+
+
+
+% legend("$Slip$ (Chi-Square Test using Slip Model)", 'FontSize',20, 'Interpreter','latex');
+xlabel("$Chi-Square$ $Test$ $Using$ $Slip$ $model$", "FontSize", 12,'Interpreter','latex');
+ylabel("$Chi$", "FontSize", 12,'Interpreter','latex');
 box on
 grid on
 

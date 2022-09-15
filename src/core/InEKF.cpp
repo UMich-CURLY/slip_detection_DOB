@@ -56,6 +56,8 @@ InEKF::InEKF(RobotState state, NoiseParams params, ErrorType error_type) :
     error_type_(error_type) {
     }
 
+
+
 // Clear all data in the filter
 void InEKF::clear() {
     state_ = RobotState();
@@ -262,9 +264,7 @@ Eigen::MatrixXd InEKF::DiscreteNoiseMatrix(Eigen::MatrixXd& Phi, double dt){
 
 
 // InEKF Propagation - Inertial Data
-void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
-
-    double decaying_rate = 2.5;
+void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt, double decaying_rate) {
 
     // Bias corrected IMU measurements
     Eigen::Vector3d w = imu.head(3)  - state_.getGyroscopeBias();    // Angular Velocity
@@ -281,8 +281,6 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
     //  ------------ Propagate Covariance --------------- //
     Eigen::MatrixXd Phi = this->StateTransitionMatrix(w,a,decaying_rate,dt);
     Eigen::MatrixXd Qd = this->DiscreteNoiseMatrix(Phi, dt);
-    std::cout << "Qd: " << Qd << std::endl;
-    std::cout << "Phi * P * Phi.transpose(): " << Phi * P * Phi.transpose() << std::endl;
     Eigen::MatrixXd P_pred = Phi * P * Phi.transpose() + Qd;
 
     //  ------------ Propagate Mean --------------- // 
@@ -302,12 +300,7 @@ void InEKF::Propagate(const Eigen::Matrix<double,6,1>& imu, double dt) {
         X_pred.block<3,3>(0,0) = R * G0;
         X_pred.block<3,1>(0,3) = v + (R*G1*a + g_)*dt;
         X_pred.block<3,1>(0,4) = p + v*dt + (R*G2*a + 0.5*g_)*dt*dt;
-        std::cout << "The matrix X-1.1 is: \n" << X << std::endl;
-        std::cout << "The matrix dt is: \n" << dt << std::endl;    
-        std::cout << "The matrix decaying_rate*dt is: \n" << decaying_rate*dt << std::endl;    
-        std::cout << "The matrix exp(-decaying_rate*dt) is: \n" << exp(-decaying_rate*dt) << std::endl;
-        X_pred.block<3,1>(0,5) = disturbance * exp(-decaying_rate*dt);
-        std::cout << "The matrix X-1.2 is: \n" << X << std::endl;    
+        X_pred.block<3,1>(0,5) = disturbance * exp(-decaying_rate*dt); 
     } else {
         // Propagate body-centric state estimate
         Eigen::MatrixXd X_pred = X;
@@ -352,12 +345,12 @@ void InEKF::CorrectRightInvariant(const Eigen::MatrixXd& Z, const Eigen::MatrixX
     Eigen::MatrixXd K = PHT * S.inverse();
 
     std::string sep = "\n----------------------------------------\n";
-    std::cout << "The matrix X-2 is: \n" << X << sep << std::endl;
-    // std::cout << "The matrix K is: \n" << K << sep << std::endl;
-    // std::cout << "The matrix Z is: \n" << Z << sep << std::endl;
-    // std::cout << "The matrix N is: \n" << N << sep << std::endl;
-    // std::cout << "The matrix H is: \n" << H << sep << std::endl;
-    std::cout << "The matrix P is: \n" << P << sep << std::endl;
+    // std::cout << "The matrix X-2 is: \n" << X << sep << std::endl;
+    // // std::cout << "The matrix K is: \n" << K << sep << std::endl;
+    // // std::cout << "The matrix Z is: \n" << Z << sep << std::endl;
+    // // std::cout << "The matrix N is: \n" << N << sep << std::endl;
+    // // std::cout << "The matrix H is: \n" << H << sep << std::endl;
+    // std::cout << "The matrix P is: \n" << P << sep << std::endl;
     // std::cout << "The matrix PHT is: \n" << PHT << sep << std::endl;
     // std::cout << "The matrix S is: \n" << S << sep << std::endl;
     
@@ -381,7 +374,6 @@ void InEKF::CorrectRightInvariant(const Eigen::MatrixXd& Z, const Eigen::MatrixX
     /// REMARK: set yaw bias derivative estimation to 0
     dTheta(2) = 0;
 
-    std::cout << dTheta << "\n" << std::endl;
     Eigen::VectorXd Theta_new = Theta + dTheta;
 
 
@@ -913,10 +905,10 @@ void InEKF::CorrectVelocity(const Eigen::Vector3d& measured_velocity, const Eige
     Eigen::Vector3d v = state_.getVelocity();
     Eigen::Vector3d disturbance = state_.getDisturbanceContactVel();
 
-    std::cout << "R: " << R << std::endl;
-    std::cout << "v: " << v << std::endl;
-    std::cout << "disturbance: " << disturbance << std::endl;
-    std::cout << "measured_velocity: " << measured_velocity << std::endl;
+    // std::cout << "R: " << R << std::endl;
+    // std::cout << "v: " << v << std::endl;
+    // std::cout << "disturbance: " << disturbance << std::endl;
+    // std::cout << "measured_velocity: " << measured_velocity << std::endl;
 
     int startIndex = Z.rows();
     Z.conservativeResize(startIndex+3, Eigen::NoChange);

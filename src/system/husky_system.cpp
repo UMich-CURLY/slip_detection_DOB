@@ -55,6 +55,8 @@ HuskySystem::HuskySystem(ros::NodeHandle* nh, husky_inekf::husky_data_t* husky_d
 
     nh_->param<bool>("/settings/enable_friction_estimator", enable_friction_estimator, false);
 
+    nh_->param<bool>("/settings/enable_body_vel_est", BodyVelEstModeOn_, false);
+
     outfile_.open(file_name_,std::ofstream::out);
     vel_est_outfile_.open(vel_est_file_name_, std::ofstream::out);
     bias_est_outfile_.open(bias_est_file_name_, std::ofstream::out);
@@ -109,16 +111,14 @@ void HuskySystem::step() {
         // update using body velocity from wheel encoders
         if (enable_wheel_vel_ && updateNextWheelVelocity()) {
 
-
-            // auto disturbance_est = state_.getDisturbance();
-            // double dist_x = disturbance_est(0);
-            // double dist_y = disturbance_est(1);
-            // double dist_z = disturbance_est(2);
-            // double disturbance_abs = sqrt(dist_x*dist_x+dist_y*dist_y+dist_z*dist_z);
-
-            // std::cout << "wheel_vel_cov_: " << wheel_vel_cov_ << std::endl;
-            // wheel_vel_cov_ = wheel_vel_cov_* exp(disturbance_abs);
-            // std::cout << "wheel_vel_cov_: " << wheel_vel_cov_ << std::endl;
+            if(BodyVelEstModeOn_){
+                auto disturbance_est = state_.getDisturbance();
+                double dist_x = disturbance_est(0);
+                double dist_y = disturbance_est(1);
+                double dist_z = disturbance_est(2);
+                double disturbance_abs = sqrt(dist_x*dist_x+dist_y*dist_y+dist_z*dist_z);
+                wheel_vel_cov_ = wheel_vel_cov_* exp(disturbance_abs);
+            }
 
             estimator_.correctVelocity(*(wheel_velocity_packet_.get()),state_,wheel_vel_cov_);
             new_pose_ready_ = true;
@@ -157,12 +157,15 @@ void HuskySystem::step() {
 
         if (enable_pose_publisher_ && new_pose_ready_) {
             pose_publisher_node_.posePublish(state_);
+            pose_publisher_node_.velPublish(state_);
+            pose_publisher_node_.slipPublish(state_);
+            pose_publisher_node_.slipFlagPublish(state_);
         }
 
 
         if(new_pose_ready_){
             slipEstimator(state_);
-            slipEstimator_DOB(state_);            
+            slipEstimator_SlipModel(state_);            
         }
 
         if (enable_friction_estimator && new_pose_ready_) {
@@ -241,7 +244,7 @@ void HuskySystem::frictionEstimator(const husky_inekf::HuskyState& state){
     }
 }
 
-void HuskySystem::slipEstimator(const husky_inekf::HuskyState& state){
+void HuskySystem::slipEstimator(husky_inekf::HuskyState& state){
 
     // Extract out current IMU data [w;a]
     Eigen::Matrix<double,6,1> imu;
@@ -262,26 +265,29 @@ void HuskySystem::slipEstimator(const husky_inekf::HuskyState& state){
     Eigen::Vector3d measured_velocity = (*(wheel_velocity_packet_.get())).getLinearVelocity();
 
     Eigen::MatrixXd G;
-    G.conservativeResize(3, 6);
-    G.block(0,0,3,3) = -R.transpose()*skew(v);
-    G.block(0,3,3,3) = R.transpose();
+    G.conservativeResize(3, 3);
+    G.block(0,0,3,3) = R.transpose();
 
-    std::cout << " P.block(0,0,6,6): " <<  P.block(0,0,6,6) << std::endl;
-    Eigen::Matrix3d Sigma = G* P.block(0,0,6,6)* G.transpose();
+    Eigen::Matrix3d Sigma = G* P.block(3,3,3,3)* G.transpose();
+
+    std::cout << "P.block(3,3,3,3): " << P.block(3,3,3,3) << std::endl;
+    std::cout << "Sigma: " << Sigma << std::endl;
+    std::cout << "0.0001*Eigen::MatrixXd::Identity(3,3): " << 0.0001*Eigen::MatrixXd::Identity(3,3) << std::endl;
 
 
     chi = (measured_velocity - R.transpose()*v).transpose() * (Sigma + 0.0001*Eigen::MatrixXd::Identity(3,3)).inverse()*(measured_velocity - R.transpose()*v);
-
-    std::cout << "chi: " << chi << std::endl;
-    if (chi>0.007) {
+    std::cout << "chi: "  << chi << std::endl;
+    if (chi>4.642) {
         slip_flag_1 = 1;
     }
     else{
         slip_flag_1 = 0;
     }
+    
+    state.slip_flag = slip_flag_1;
 }
 
-void HuskySystem::slipEstimator_DOB(const husky_inekf::HuskyState& state){
+void HuskySystem::slipEstimator_SlipModel(const husky_inekf::HuskyState& state){
 
     // Extract out current IMU data [w;a]
     Eigen::Matrix<double,6,1> imu;
@@ -303,27 +309,22 @@ void HuskySystem::slipEstimator_DOB(const husky_inekf::HuskyState& state){
     Eigen::Vector3d measured_velocity = (*(wheel_velocity_packet_.get())).getLinearVelocity();
 
     Eigen::MatrixXd G;
-    G.conservativeResize(3, 9);
-    G.block(0,0,3,3) = -R.transpose()*skew(v)-R.transpose()*skew(disturbance);
+    G.conservativeResize(3, 6);
+    G.block(0,0,3,3) = R.transpose();
     G.block(0,3,3,3) = R.transpose();
-    G.block(0,6,3,3) = R.transpose();
 
     Eigen::MatrixXd Cov;
-    Cov.conservativeResize(9, 9);
-    Cov.block(0,0,6,6) = P.block(0,0,6,6);
-    Cov.block(0,6,6,3) = P.block(0,9,6,3);
-    Cov.block(6,0,3,6) = P.block(9,0,3,6);
-    Cov.block(6,6,3,3) = P.block(9,9,3,3);
-
-    std::cout << " Cov: " <<  Cov << std::endl;
+    Cov.conservativeResize(6, 6);
+    Cov.block(0,0,3,3) = P.block(3,3,3,3);
+    Cov.block(0,3,3,3) = P.block(0,9,3,3);
+    Cov.block(3,0,3,3) = P.block(9,0,3,3);
+    Cov.block(3,3,3,3) = P.block(9,9,3,3);
 
     Eigen::Matrix3d Sigma = G * Cov * G.transpose();
 
+    chi_2 = (measured_velocity - R.transpose()*v - R.transpose()*disturbance).transpose() * (Sigma + 0.0001*Eigen::MatrixXd::Identity(3,3)).inverse()*(measured_velocity - R.transpose()*v - R.transpose()*disturbance);
 
-    chi = (measured_velocity - R.transpose()*v - R.transpose()*disturbance).transpose() * (Sigma + 0.0001*Eigen::MatrixXd::Identity(3,3)).inverse()*(measured_velocity - R.transpose()*v - R.transpose()*disturbance);
-
-    std::cout << "chi: " << chi << std::endl;
-    if (chi>0.007) {
+    if (chi_2>4.642) {
         slip_flag_2 = 1;
     }
     else{
@@ -352,7 +353,7 @@ void HuskySystem::logPoseTxt(const husky_inekf::HuskyState& state_) {
 
         // log estimated disturbance
         auto disturbance_est = state_.getDisturbance();
-        disturbance_est_outfile_ << t << " " << disturbance_est(0) << " " << disturbance_est(1) << " " << disturbance_est(2) << " " << mu << " " << slip_flag_1 << " " << slip_flag_2 << " " <<  chi << std::endl<<std::flush;
+        disturbance_est_outfile_ << t << " " << disturbance_est(0) << " " << disturbance_est(1) << " " << disturbance_est(2) << " " << mu << " " << slip_flag_1 << " " << chi_2 << " " <<  chi << std::endl<<std::flush;
 
         skip_count_ = log_pose_skip_;
     }

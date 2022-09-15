@@ -51,6 +51,10 @@ settings:
 
   enable_friction_estimator: true
 
+  enable_body_vel_est: false
+
+  decaying_rate: 2.5
+
   ########################
   # Orientation Settings #
   ########################
@@ -86,6 +90,9 @@ settings:
   base_frame_id: "/husky/imu" 
   pose_topic: "/husky/inekf_estimation/pose"
   path_topic: "/husky/inekf_estimation/path"
+  base_link: "/base_link"
+  base_link_inekf: "/base_link_inekf"
+  velodyne_inekf: "/velodyne_inekf"
   publish_rate: 1000
   pose_skip: 1
   

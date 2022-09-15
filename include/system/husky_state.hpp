@@ -105,7 +105,11 @@ class HuskyState {
         void setP(const Eigen::MatrixXd& P);
 
         friend std::ostream& operator<<(std::ostream& os, const  HuskyState& obj);  
+        
 
+        // TODO
+        int slip_flag = false;
+        
     private:
         double time_stamp_;
         Eigen::Matrix<double, 10,1> q_;
