@@ -96,7 +96,7 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
 
     transform.setRotation(q3);
     transform.setOrigin(v3);
-    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,pose_frame_, velodyne_frame_));
+    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp, pose_frame_, velodyne_frame_));
 
     seq_++;
 }
