@@ -25,6 +25,9 @@ This project introduces a novel slip estimator using Disturbance Observer(DOB). 
 </p>
 
 
+## Data
+Rosbag data and videos we used in paper are presented on [Google Drive](https://drive.google.com/drive/folders/1Elxdw1XJjsyvJr4Wt4myD0yh2A5kPXXe?usp=sharing)
+
 ## Dependencies
 * ROS
 * Eigen3
