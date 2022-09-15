@@ -20,9 +20,6 @@ PosePublisherNode::PosePublisherNode(ros::NodeHandle* n) : n_(n) {
     // first_pose_ = pose_from_csv_.front();
     // std::cout<<"first pose is: "<<first_pose_[0]<<", "<<first_pose_[1]<<", "<<first_pose_[2]<<std::endl;
     pose_frame_ = pose_frame;
-    base_link_frame_ = base_link_inekf;
-    top_plate_link_frame_ = top_plate_link_inekf;
-    sensor_arch_frame_ = sensor_arch_inekf;
     velodyne_frame_ = velodyne_inekf;
     
     pose_pub_ = n_->advertise<geometry_msgs::PoseWithCovarianceStamped>(pose_topic, 1000);
