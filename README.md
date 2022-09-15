@@ -2,20 +2,20 @@
 This project introduces a novel slip estimator using Disturbance Observer(DOB). A rigorous model for invariant ovserver that estimate slipping veolcity is built on top of an Invariant Kalman Filter system for wheeled robot state estimation. The DOB-based method provides stable slip event observer on different deformable terrain.
 
 <figure>
-  <img src="figures/mars_field.png" style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
+  <img src="figures/mars_field.png" alt="Husky robot climbing a Mars-like hill" style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
 </figure>
 <figure>
-  <img src="figures/mars_field_closer_look.png"  style="display: block; margin-left:auto; margin-right:auto; width=50%"/> 
+  <img src="figures/mars_field_closer_look.png"  alt="Closer look of slipage" style="display: block; margin-left:auto; margin-right:auto; width=50%"/> 
 </figure>
 <figure>
-  <img src="figures/topdown.png" style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
+  <img src="figures/husky.png" alt="Definition of coordinates" style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
   <figcaption style="font-size:10pt; color:grey;text-align:justify;"><strong>Figure 1:</strong> Experimental wheeled robot platform Husky. The world frame W is a fixed frame. We define the body frame B as x pointing forward, y point to the left of the vehicle, and z derived from the right hand rule. We obtain angular velocity measurements ωl and ωr from the wheel encoders. Using an inertial measurement unit and wheel encoders measurements, the proposed method estimates the body velocity, slip velocity, robot orientation and position, visualized as v, u, R, and p, respectively.</figcaption>
 </figure>
 
 ## Results
 
 <figure>
-  <img src="figures/vel_ori_44_57.png" style="display: block; margin-left:auto; margin-right:auto; width=50%"/> 
+  <img src="figures/vel_ori_44_57.png" alt="Result plots" style="display: block; margin-left:auto; margin-right:auto; width=50%"/> 
   <figcaption style="font-size:10pt; color:grey;text-align:justify;"><strong>Figure 2: </strong>Yaw, pitch and roll angles of the main body are depicted in the
 left three figures. Body Velocities are depicted in the right three figures.
 Black: ground truth from ORB-SLAM3di system. Blue dashes: plain InEKF
@@ -23,7 +23,7 @@ without DOB. Red dashes: InEKF with DOB.</figcaption>
 </figure>
 
 <figure>
-  <img src="figures/slip_state.png" style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
+  <img src="figures/slip_state.png" alt="Slip detection plot" style="display: block; margin-left:auto; margin-right:auto; width=50%"/>
   <figcaption style="font-size:10pt; color:grey;text-align:justify;"><strong>Figure 3: </strong>Slip state estimation from sequence over slippery soap terrain. Red
 dots: Detected slip event during which robot is slipping. Blue bar: Ground
 truth during which robot is slipping.</figcaption>
@@ -97,7 +97,7 @@ The program support simultaneously correction from 3 different velocity topics. 
   
 * `velocity_time_threshold`: Threshold for time difference between the received velocity message and current time (sec). The message will be dropped if the time difference is larger than this threshold.
 
-* `enable_friction_estimator`: [To be updated]
+* `enable_friction_estimator`: <span style="color:grey;">[To be updated in future development]</span>
 
 ### **Frame Definition**
 

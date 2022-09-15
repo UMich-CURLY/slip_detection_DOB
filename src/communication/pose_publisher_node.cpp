@@ -4,21 +4,15 @@ PosePublisherNode::PosePublisherNode(ros::NodeHandle* n) : n_(n) {
     // Create private node handle
     ros::NodeHandle nh("~");
     // std::string pose_csv_file, init_rot_file;
-    std::string pose_topic, pose_frame, base_link, base_link_inekf, top_plate_link_inekf, sensor_arch_inekf, velodyne_inekf, slip_topic, vel_topic, slip_flag_topic;
+    std::string pose_topic, pose_frame, velodyne_inekf, slip_topic, vel_topic, slip_flag_topic;
 
     nh.param<std::string>("/settings/pose_topic", pose_topic, "/husky/inekf_estimation/pose");
     nh.param<std::string>("/settings/slip_topic", slip_topic, "/husky/inekf_estimation/slip");
     nh.param<std::string>("/settings/vel_topic", vel_topic, "/husky/inekf_estimation/body_velocity");
     nh.param<std::string>("/settings/vel_topic", slip_flag_topic, "/husky/inekf_estimation/slip_flag");
 
-
     nh.param<std::string>("/settings/map_frame_id", pose_frame, "/odom");
-    nh.param<std::string>("/settings/base_link", base_link, "/base_link");
-    nh.param<std::string>("/settings/base_link_inekf", base_link_inekf, "/base_link_inekf");
-    nh.param<std::string>("/settings/top_plate_link_inekf", top_plate_link_inekf, "/top_plate_link_inekf");
-    nh.param<std::string>("/settings/sensor_arch_inekf", sensor_arch_inekf, "/sensor_arch_inekf");
     nh.param<std::string>("/settings/velodyne_inekf", velodyne_inekf, "/velodyne_inekf");
-
 
     nh.param<double>("/settings/publish_rate", publish_rate_, 1000); 
     nh.param<int>("/settings/pose_skip", pose_skip_, 0); 
@@ -59,29 +53,9 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
     // std::cout<<"publishing: "<<pose_msg.pose.pose.position.x<<", "<<pose_msg.pose.pose.position.y<<", "<<pose_msg.pose.pose.position.z<<std::endl;
     pose_pub_.publish(pose_msg);
 
-    // Publish TF
+    // Publish TF from odom frame to velodyne_inekf frame:
     tf::Transform transform;
     static tf::TransformBroadcaster br;
-    // transform.setOrigin(tf::Vector3(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z));
-    // transform.setRotation(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
-    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,pose_frame_,base_link_frame_));
-    
-    // transform.setOrigin(tf::Vector3(0.0812, 0.0, 0.245));
-    // transform.setRotation(tf::Quaternion(0, 0, 0, 1));
-    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,base_link_frame_,top_plate_link_frame_));
-
-    // transform.setOrigin(tf::Vector3(0, 0, 0));
-    // transform.setRotation(tf::Quaternion(0, 0, 0, 1));
-    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,top_plate_link_frame_, sensor_arch_frame_));
-
-    // transform.setOrigin(tf::Vector3(-0.0725, 0, 0.5227));
-    // transform.setRotation(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
-    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,sensor_arch_frame_, velodyne_frame_));
-
-    // transform.setOrigin(tf::Vector3(0.0087, 0, 0.7677));
-    // transform.setRotation(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
-    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,base_link_frame_, velodyne_frame_));
-
     tf::Matrix3x3 R1(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
     tf::Vector3 v1(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z);
 
