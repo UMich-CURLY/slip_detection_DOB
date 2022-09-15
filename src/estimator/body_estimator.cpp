@@ -42,6 +42,8 @@ BodyEstimator::BodyEstimator() :
     std::vector<double> bg0, ba0;
     nh.param<std::vector<double>>("/prior/gyroscope_bias", bg0, std::vector<double>({0, 0, 0}));
     nh.param<std::vector<double>>("/prior/accelerometer_bias", ba0, std::vector<double>({0, 0, 0}));
+
+    nh.param<double>("/settings/decaying_rate", decaying_rate_, 1);
     
     bg0_ << bg0[0], bg0[1], bg0[2];
     ba0_ << ba0[0], ba0[1], ba0[2];
@@ -78,7 +80,7 @@ void BodyEstimator::propagateIMU(const ImuMeasurement<double>& imu_packet_in, Hu
     }
     
     if (dt > 0)
-        filter_.Propagate(imu_prev_, dt); 
+        filter_.Propagate(imu_prev_, dt, decaying_rate_); 
 
     // correctKinematics(state);
 
@@ -150,8 +152,6 @@ void BodyEstimator::correctVelocity(const VelocityMeasurement& velocity_packet_i
 
     if(std::abs(t-state.getTime())<velocity_t_thres_){
 
-        std::cout << "Noise parameters are initialized to: \n";
-        std::cout << filter_.getNoiseParams() << std::endl;
 
         inekf::RobotState estimate_old = filter_.getState();
         Eigen::Vector3d measured_velocity = velocity_packet_in.getLinearVelocity();

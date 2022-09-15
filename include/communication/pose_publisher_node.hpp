@@ -10,6 +10,7 @@
 #include "system/husky_state.hpp"
 #include <Eigen/Dense>
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include "tf/transform_broadcaster.h"
 #include <nav_msgs/Path.h>
 
 class PosePublisherNode{
@@ -19,11 +20,19 @@ class PosePublisherNode{
 
         // Publishes pose
         void posePublish(const husky_inekf::HuskyState& state_);
+        void velPublish(const husky_inekf::HuskyState& state_);
+        void slipPublish(const husky_inekf::HuskyState& state_);
+        void slipFlagPublish(const husky_inekf::HuskyState& state_);
 
     private:
         ros::NodeHandle* n_;
+        
         ros::Publisher pose_pub_;
-        std::string pose_frame_;
+        ros::Publisher vel_pub_;
+        ros::Publisher slip_pub_;
+        ros::Publisher slip_flag_pub_;
+
+        std::string pose_frame_,base_link_frame_, velodyne_frame_, top_plate_link_frame_, sensor_arch_frame_;
         uint32_t seq_ = 0;
         double publish_rate_;
         int pose_skip_;

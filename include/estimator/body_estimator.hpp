@@ -59,6 +59,8 @@ class BodyEstimator {
         double velocity_t_thres_;
         Eigen::Matrix<double,6,1> imu_prev_;
 
+        double decaying_rate_;
+
 };
 
 } // end husky_inekf namespace

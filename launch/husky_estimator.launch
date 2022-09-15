@@ -1,6 +1,6 @@
 <launch>
     <arg name="husky_namespace" default="husky" />
-    <param name="use_sim_time" value="true" />
+    <param name="use_sim_time" value="false" />
 
 
     <!-- if debug -->

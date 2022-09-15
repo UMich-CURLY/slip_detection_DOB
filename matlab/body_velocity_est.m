@@ -315,10 +315,30 @@ xlim([95,108]);
 
 %% plot vel and ori
 
+figure(13)
 
-figure(12)
+imu_baseline = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_no_disturbance/wheel_imu.txt");
+imu_DOB = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_vis_paper/wheel_imu.txt");
 
 orbslam3_Euler = quat2eul(orbslam3_Mat(:,5:8));
+orbslam3_Euler = [-orbslam3_Euler(:,1) -orbslam3_Euler(:,2) orbslam3_Euler(:,3)];
+
+wcar_baseline = [imu_baseline(:,1) imu_baseline(:,2) imu_baseline(:,3) imu_baseline(:,4)];
+wcar_DOB = [imu_DOB(:,1) imu_DOB(:,2) imu_DOB(:,3) imu_DOB(:,4)];
+
+R_Orb2Body = [    0.9984    0.0219    0.0521;
+   -0.0220    0.9998    0.0012;
+   -0.0521   -0.0024    0.9986];
+
+Dis_Body2Orb = [-0.0012   -0.1010   -0.0177];
+
+orbslam3_Euler_changed_frame = [];
+
+for i=1:length(orbslam3_Euler)
+    orbslam3_Euler_changed_frame_one_moment = rotm2eul(R_Orb2Body * eul2rotm(orbslam3_Euler(i,:)));
+    orbslam3_Euler_changed_frame = [orbslam3_Euler_changed_frame;orbslam3_Euler_changed_frame_one_moment];
+end
+
 
 est_pose_baseline_x = est_pose_baseline(:,5);
 est_pose_baseline_y = est_pose_baseline(:,6);
@@ -335,7 +355,7 @@ est_pose_Quat = [est_pose_w est_pose_x est_pose_y est_pose_z];
 est_pose_Euler =  quat2eul(est_pose_Quat);
 
 subplot(3,2,1)
-plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,-orbslam3_Euler(:,1),'k','LineWidth',1.5);
+plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler_changed_frame(:,1),'k','LineWidth',1.5);
 hold on
 plot(est_pose_baseline(:,1)-est_pose_baseline(1,1),est_pose_baseline_Euler(:,1),'b-.','LineWidth',1.3);
 hold on
@@ -344,13 +364,13 @@ hold on
 
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$yaw \; (rad)$', 'fontsize', fsize, 'Interpreter','latex')
-xlim([44,57]);
+% xlim([44,57]);
 box on
 grid on
 
 
 subplot(3,2,3)
-plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,-orbslam3_Euler(:,2),'k','LineWidth',1.5);
+plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler_changed_frame(:,2),'k','LineWidth',1.5);
 hold on
 plot(est_pose_baseline(:,1)-est_pose_baseline(1,1),est_pose_baseline_Euler(:,2),'b-.','LineWidth',1.3);
 hold on
@@ -359,12 +379,12 @@ hold on
 
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$pitch \; (rad)$', 'fontsize', fsize, 'Interpreter','latex')
-xlim([44,57]);
+% xlim([44,57]);
 box on
 grid on
 
 subplot(3,2,5)
-plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler(:,3),'k','LineWidth',1.5);
+plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler_changed_frame(:,3),'k','LineWidth',1.5);
 hold on
 plot(est_pose_baseline(:,1)-est_pose_baseline(1,1),est_pose_baseline_Euler(:,3),'b-.','LineWidth',1.3);
 hold on
@@ -373,10 +393,16 @@ hold on
 
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$roll \; (rad)$', 'fontsize', fsize, 'Interpreter','latex')
-xlim([44,57]);
+% xlim([44,57]);
 box on
 grid on
 
+
+R_Orb2Body = [    0.9984    0.0219    0.0521;
+   -0.0220    0.9998    0.0012;
+   -0.0521   -0.0024    0.9986];
+
+Dis_Body2Orb = [-0.0041   -0.1011   -0.0177];
 
 vel_x = movmean(vel_mat_orbslam3(1:end,2), 3);
 vel_y = movmean(vel_mat_orbslam3(1:end,3), 3);
@@ -386,11 +412,30 @@ vel_z = movmean(vel_mat_orbslam3(1:end,4), 3);
 vel_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_vis_paper/wheel_vel_est.txt");
 vel_est_no_disturbance = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_no_disturbance/wheel_vel_est.txt");
 
+
+wcar_baseline_ = interp1(wcar_baseline(:,1)-wcar_baseline(1,1), wcar_baseline(:,2:4), vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1));
+
+wcar_DOB_ = interp1(wcar_DOB(:,1)-wcar_DOB(1,1), wcar_DOB(:,2:4), vel_est(1:end,1)-vel_est(1,1));
+
+vel_orb_baseline = [];
+for i=1:length(wcar_baseline_)
+    vel_orb_baseline_one_mement = transpose(R_Orb2Body) * (transpose(vel_est_no_disturbance(i,5:7))-skew(Dis_Body2Orb)* transpose(wcar_baseline_(i,:)));
+    vel_orb_baseline = [vel_orb_baseline; transpose(vel_orb_baseline_one_mement)];
+end
+
+vel_orb_DOB = [];
+for i=1:length(wcar_DOB_)
+    vel_orb_DOB_one_mement = transpose(R_Orb2Body) * (transpose(vel_est(i,5:7))-skew(Dis_Body2Orb)* transpose(wcar_DOB_(i,:)));
+    vel_orb_DOB = [vel_orb_DOB; transpose(vel_orb_DOB_one_mement)];
+end
+
+
+
 subplot(3,2,2)
 hold on
 plot(vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1,vel_x,'k','LineWidth',1.5);
-plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_est_no_disturbance(:,5),'b-.','LineWidth',1.3);
-plot(vel_est(1:end,1)-vel_est(1,1),vel_est(:,5),'r-.','LineWidth',1.3);
+plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_orb_baseline(:,1),'b-.','LineWidth',1.3);
+plot(vel_est(1:end,1)-vel_est(1,1),vel_orb_DOB(:,1),'r-.','LineWidth',1.3);
 
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$v_x \; (m/s)$', 'fontsize', fsize, 'Interpreter','latex')
@@ -400,8 +445,8 @@ xlim([44,57]);
 subplot(3,2,4)
 hold on
 plot(vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1,-vel_y,'k','LineWidth',1.5);
-plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_est_no_disturbance(:,6),'b-.','LineWidth',0.9);
-plot(vel_est(1:end,1)-vel_est(1,1),vel_est(:,6),'r-.','LineWidth',0.9);
+plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_orb_baseline(:,2),'b-.','LineWidth',0.9);
+plot(vel_est(1:end,1)-vel_est(1,1),vel_orb_DOB(:,2),'r-.','LineWidth',0.9);
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$v_y \; (m/s)$', 'fontsize', fsize, 'Interpreter','latex')
 box on 
@@ -410,8 +455,8 @@ xlim([44,57]);
 subplot(3,2,6)
 hold on
 plot(vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1,-vel_z,'k','LineWidth',1.5);
-plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_est_no_disturbance(:,7),'b-.','LineWidth',0.9);
-plot(vel_est(1:end,1)-vel_est(1,1),vel_est(:,7),'r-.','LineWidth',0.9);
+plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_orb_baseline(:,3),'b-.','LineWidth',0.9);
+plot(vel_est(1:end,1)-vel_est(1,1),vel_orb_DOB(:,3),'r-.','LineWidth',0.9);
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$v_z \; (m/s)$', 'fontsize', fsize, 'Interpreter','latex')
 legend('$State-OrbSLAM3$','$Estimated-State-Baseline$','$Estimated-State-DOB$', 'fontsize', fsize, 'Interpreter','latex');
@@ -735,4 +780,29 @@ function vel_ang_max = constrain_ang_vel(vel)
     end
 end
 
+function xs = skew(x)
+xs = [0, -x(3), x(2);...
+      x(3), 0, -x(1);...
+      -x(2), x(1), 0];
+end
 
+function R = Rx(t)
+
+R = [1, 0, 0;...
+     0, cos(t), -sin(t);...
+     0, sin(t), cos(t)];
+end
+
+function R = Rz(t)
+
+R = [cos(t), -sin(t), 0;...
+     sin(t), cos(t), 0;...
+     0, 0, 1];
+end
+
+function R = Ry(t)
+
+R = [cos(t), 0, sin(t);...
+     0, 1, 0;...
+     -sin(t), 0, cos(t)];
+end

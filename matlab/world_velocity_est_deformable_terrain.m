@@ -188,7 +188,7 @@ for i=2:length(orbslam3_ow)
     current_T = [quat2rotm(orbslam3_Mat(i,5:8)) [orbslam3_Mat(i,2);orbslam3_Mat(i,3);orbslam3_Mat(i,4)]; 0 0 0 1];
     del_t = orbslam3_Mat(i,1) - orbslam3_Mat(i-1,1);
     vel_wedge = logm(inv(prev_T)*current_T)/del_t; % Left Invariant
-    vel_vec = undwedge_se3(vel_wedge)'; % 1x6
+    vel_vec = undwedged_se3(vel_wedge)'; % 1x6
     vel_mat_orbslam3 = [vel_mat_orbslam3;orbslam3_Mat(i,1) vel_vec];
 end
 
@@ -220,7 +220,7 @@ end
 vel_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3/wheel_vel_est.txt");
 vel_est_no_disturbance = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_no_disturbance/wheel_vel_est.txt");
 
-subplot(3,1,1)
+subplot(3,2,1)
 hold on
 plot(vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1,vel_world(:,1),'k','LineWidth',1.5);
 plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_est_no_disturbance(:,2),'b-.','LineWidth',1.3);
@@ -231,7 +231,7 @@ ylabel('$v_x \; (m/s)$', 'fontsize', fsize, 'Interpreter','latex')
 box on 
 grid on
 
-subplot(3,1,2)
+subplot(3,2,3)
 hold on
 plot(vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1,-vel_world(:,2),'k','LineWidth',1.5);
 plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_est_no_disturbance(:,3),'b-.','LineWidth',0.9);
@@ -242,7 +242,7 @@ xlim([5,25]);
 box on 
 grid on
 
-subplot(3,1,3)
+subplot(3,2,5)
 hold on
 plot(vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1,-vel_world(:,3),'k','LineWidth',1.5);
 plot(vel_est_no_disturbance(1:end,1)-vel_est_no_disturbance(1,1),vel_est_no_disturbance(:,4),'b-.','LineWidth',0.9);
@@ -254,6 +254,42 @@ legend('$Velocity-OrbSLAM3$','$Estimated-Velocity-Baseline$','$Estimated-Velocit
 box on 
 grid on
 
+
+disturbance = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_disturbance_est.txt");
+
+subplot(3,2,2)
+plot(disturbance(1:end,1)-disturbance(1,1),abs(disturbance(1:end,2)),'Color','b','LineWidth',1.5);
+hold on
+box on 
+grid on
+xlim([5,25]);
+xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
+ylabel('$u_x \; (m/s)$', 'fontsize', fsize, 'Interpreter','latex')
+legend("$disturbance-x$", 'FontSize',20, 'Interpreter','latex');
+
+subplot(3,2,4)
+plot(disturbance(1:end,1)-disturbance(1,1),abs(disturbance(1:end,3)),'Color', 'r','LineWidth',1.5);
+hold on
+box on 
+grid on
+xlim([5,25]);
+xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
+ylabel('$u_y \; (m/s)$', 'fontsize', fsize, 'Interpreter','latex')
+legend("$disturbance-y$", 'FontSize',20, 'Interpreter','latex');
+subplot(3,2,6)
+plot(disturbance(1:end,1)-disturbance(1,1),abs(disturbance(1:end,4)),'Color', 'magenta','LineWidth',1.5);
+box on 
+grid on
+xlim([5,25]);
+xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
+ylabel('$u_z \; (m/s)$', 'fontsize', fsize, 'Interpreter','latex')
+
+legend("$disturbance-z$", 'FontSize',20, 'Interpreter','latex');
+
+xlabel("time (x)", "FontSize", 12)
+ylabel("m/s", "FontSize", 12)
+box on
+grid on
 
 %% RMSE
 
@@ -325,7 +361,6 @@ rmse_DOB_vz = sqrt(immse(DOB_vz_extracted, orb_vz(:,2)));
 
 
 %% plot vel
-
 
 figure(1)
 % d = designfilt('lowpassfir', 'FilterOrder', 1, 'CutoffFrequency', 11, 'SampleRate', 200);
@@ -601,8 +636,9 @@ end
 
 rmse_baseline_roll_2 = sqrt(immse(baseline_roll_extracted, orb_roll(662:858,2)));
 rmse_DOB_roll_2 = sqrt(immse(DOB_roll_extracted, orb_roll(662:858,2)));
+
 %% Functions
-function twist_vec = undwedge_se3(twist_mat)
+function twist_vec = undwedged_se3(twist_mat)
     % v_x v_y v_z w_x w_y w_z
 %     twist_vec = [twist_mat(:,end); twist_mat(2,3); twist_mat(3,1); twist_mat(1,2)]; % notes
     twist_vec = [constrain_lin_vel(twist_mat(1,end)); constrain_lin_vel(twist_mat(2,end)); constrain_lin_vel(twist_mat(3,end)); constrain_ang_vel(twist_mat(3,2)); constrain_ang_vel(twist_mat(1,3)); constrain_ang_vel(twist_mat(2,1))]; % web and me
@@ -630,4 +666,29 @@ function vel_ang_max = constrain_ang_vel(vel)
     end
 end
 
+function xs = skew(x)
+xs = [0, -x(3), x(2);...
+      x(3), 0, -x(1);...
+      -x(2), x(1), 0];
+end
 
+function R = Rx(t)
+
+R = [1, 0, 0;...
+     0, cos(t), -sin(t);...
+     0, sin(t), cos(t)];
+end
+
+function R = Rz(t)
+
+R = [cos(t), -sin(t), 0;...
+     sin(t), cos(t), 0;...
+     0, 0, 1];
+end
+
+function R = Ry(t)
+
+R = [cos(t), 0, sin(t);...
+     0, 1, 0;...
+     -sin(t), 0, cos(t)];
+end

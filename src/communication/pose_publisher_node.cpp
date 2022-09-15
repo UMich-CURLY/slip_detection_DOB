@@ -4,18 +4,37 @@ PosePublisherNode::PosePublisherNode(ros::NodeHandle* n) : n_(n) {
     // Create private node handle
     ros::NodeHandle nh("~");
     // std::string pose_csv_file, init_rot_file;
-    std::string pose_topic, pose_frame;
+    std::string pose_topic, pose_frame, base_link, base_link_inekf, top_plate_link_inekf, sensor_arch_inekf, velodyne_inekf, slip_topic, vel_topic, slip_flag_topic;
 
     nh.param<std::string>("/settings/pose_topic", pose_topic, "/husky/inekf_estimation/pose");
+    nh.param<std::string>("/settings/slip_topic", slip_topic, "/husky/inekf_estimation/slip");
+    nh.param<std::string>("/settings/vel_topic", vel_topic, "/husky/inekf_estimation/body_velocity");
+    nh.param<std::string>("/settings/vel_topic", slip_flag_topic, "/husky/inekf_estimation/slip_flag");
+
+
     nh.param<std::string>("/settings/map_frame_id", pose_frame, "/odom");
+    nh.param<std::string>("/settings/base_link", base_link, "/base_link");
+    nh.param<std::string>("/settings/base_link_inekf", base_link_inekf, "/base_link_inekf");
+    nh.param<std::string>("/settings/top_plate_link_inekf", top_plate_link_inekf, "/top_plate_link_inekf");
+    nh.param<std::string>("/settings/sensor_arch_inekf", sensor_arch_inekf, "/sensor_arch_inekf");
+    nh.param<std::string>("/settings/velodyne_inekf", velodyne_inekf, "/velodyne_inekf");
+
+
     nh.param<double>("/settings/publish_rate", publish_rate_, 1000); 
     nh.param<int>("/settings/pose_skip", pose_skip_, 0); 
     first_pose_ = {0, 0, 0};
     // first_pose_ = pose_from_csv_.front();
     // std::cout<<"first pose is: "<<first_pose_[0]<<", "<<first_pose_[1]<<", "<<first_pose_[2]<<std::endl;
     pose_frame_ = pose_frame;
+    base_link_frame_ = base_link_inekf;
+    top_plate_link_frame_ = top_plate_link_inekf;
+    sensor_arch_frame_ = sensor_arch_inekf;
+    velodyne_frame_ = velodyne_inekf;
     
     pose_pub_ = n_->advertise<geometry_msgs::PoseWithCovarianceStamped>(pose_topic, 1000);
+    slip_pub_ = n_->advertise<geometry_msgs::Vector3Stamped>(slip_topic, 1000);
+    slip_flag_pub_ = n_->advertise<geometry_msgs::Vector3Stamped>(slip_flag_topic, 1000);
+    vel_pub_ = n_->advertise<geometry_msgs::Vector3Stamped>(vel_topic, 1000);
     // this->pose_publishing_thread_ = std::thread([this]{this->posePublishingThread();});
 }
 
@@ -28,7 +47,7 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
 
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     pose_msg.header.seq = seq_;
-    pose_msg.header.stamp = ros::Time::now();
+    pose_msg.header.stamp = ros::Time(state_.getTime());
     pose_msg.header.frame_id = pose_frame_;
     pose_msg.pose.pose.position.x = state_.x() - first_pose_[0];
     pose_msg.pose.pose.position.y = state_.y() - first_pose_[1];
@@ -39,7 +58,98 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
     pose_msg.pose.pose.orientation.z = state_.getQuaternion().z();
     // std::cout<<"publishing: "<<pose_msg.pose.pose.position.x<<", "<<pose_msg.pose.pose.position.y<<", "<<pose_msg.pose.pose.position.z<<std::endl;
     pose_pub_.publish(pose_msg);
+
+    // Publish TF
+    tf::Transform transform;
+    static tf::TransformBroadcaster br;
+    // transform.setOrigin(tf::Vector3(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z));
+    // transform.setRotation(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,pose_frame_,base_link_frame_));
+    
+    // transform.setOrigin(tf::Vector3(0.0812, 0.0, 0.245));
+    // transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,base_link_frame_,top_plate_link_frame_));
+
+    // transform.setOrigin(tf::Vector3(0, 0, 0));
+    // transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,top_plate_link_frame_, sensor_arch_frame_));
+
+    // transform.setOrigin(tf::Vector3(-0.0725, 0, 0.5227));
+    // transform.setRotation(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,sensor_arch_frame_, velodyne_frame_));
+
+    // transform.setOrigin(tf::Vector3(0.0087, 0, 0.7677));
+    // transform.setRotation(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
+    // br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp,base_link_frame_, velodyne_frame_));
+
+    tf::Matrix3x3 R1(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
+    tf::Vector3 v1(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z);
+
+    tf::Matrix3x3 R2(tf::Quaternion(0, 0, -0.7071067811848163, 0.7071067811882787));
+    tf::Vector3 v2(0.0087, 0, 0.7677);
+
+    tf::Matrix3x3 R3 = R1 * R2;
+    tf::Vector3 v3 = R1*v2 + v1;
+
+    tf::Quaternion q3;
+    R3.getRotation(q3);
+
+    transform.setRotation(q3);
+    transform.setOrigin(v3);
+    br.sendTransform(tf::StampedTransform(transform, pose_msg.header.stamp, pose_frame_, velodyne_frame_));
+
     seq_++;
+}
+
+void PosePublisherNode::velPublish(const husky_inekf::HuskyState& state_) {
+    // std::array<float,3> cur_pose = pose_from_csv_.front();
+    // pose_from_csv_.pop();
+
+    geometry_msgs::Vector3Stamped vel_msg;
+    // vel_msg.header.seq = seq_;
+    vel_msg.header.stamp = ros::Time::now();
+    vel_msg.header.frame_id = pose_frame_;
+    auto vb = state_.getBodyVelocity();
+    vel_msg.vector.x = vb(0);
+    vel_msg.vector.y = vb(1);
+    vel_msg.vector.z = vb(2);
+    // std::cout<<"publishing: "<<pose_msg.pose.pose.position.x<<", "<<pose_msg.pose.pose.position.y<<", "<<pose_msg.pose.pose.position.z<<std::endl;
+    vel_pub_.publish(vel_msg);
+    // seq_++;
+}
+
+void PosePublisherNode::slipPublish(const husky_inekf::HuskyState& state_) {
+    // std::array<float,3> cur_pose = pose_from_csv_.front();
+    // pose_from_csv_.pop();
+
+    geometry_msgs::Vector3Stamped slip_msg;
+    // slip_msg.header.seq = seq_;
+    slip_msg.header.stamp = ros::Time::now();
+    slip_msg.header.frame_id = pose_frame_;
+    auto dist = state_.getDisturbance();
+    slip_msg.vector.x = dist(0);
+    slip_msg.vector.y = dist(1);
+    slip_msg.vector.z = dist(2);
+    // std::cout<<"publishing: "<<pose_msg.pose.pose.position.x<<", "<<pose_msg.pose.pose.position.y<<", "<<pose_msg.pose.pose.position.z<<std::endl;
+    slip_pub_.publish(slip_msg);
+    // seq_++;
+}
+
+void PosePublisherNode::slipFlagPublish(const husky_inekf::HuskyState& state_) {
+    // std::array<float,3> cur_pose = pose_from_csv_.front();
+    // pose_from_csv_.pop();
+        
+    geometry_msgs::Vector3Stamped slip_flag_msg;
+    // slip_msg.header.seq = seq_;
+    slip_flag_msg.header.stamp = ros::Time::now();
+    slip_flag_msg.header.frame_id = pose_frame_;
+    int slip_flag = state_.slip_flag;
+    slip_flag_msg.vector.x = (double)slip_flag;
+    slip_flag_msg.vector.y = (double)slip_flag;
+    slip_flag_msg.vector.z = (double)slip_flag;
+    // std::cout<<"publishing: "<<pose_msg.pose.pose.position.x<<", "<<pose_msg.pose.pose.position.y<<", "<<pose_msg.pose.pose.position.z<<std::endl;
+    slip_flag_pub_.publish(slip_flag_msg);
+    // seq_++;
 }
 
 
