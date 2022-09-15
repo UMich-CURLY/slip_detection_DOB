@@ -55,7 +55,7 @@ HuskySystem::HuskySystem(ros::NodeHandle* nh, husky_inekf::husky_data_t* husky_d
 
     nh_->param<bool>("/settings/enable_friction_estimator", enable_friction_estimator, false);
 
-    nh_->param<bool>("/settings/enable_body_vel_est", BodyVelEstModeOn_, false);
+    nh_->param<bool>("/settings/enable_cov_adaptation", BodyVelEstModeOn_, false);
 
     outfile_.open(file_name_,std::ofstream::out);
     vel_est_outfile_.open(vel_est_file_name_, std::ofstream::out);
