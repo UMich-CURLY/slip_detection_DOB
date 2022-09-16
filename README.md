@@ -15,7 +15,7 @@ This project introduces a novel slip estimator using Disturbance Observer(DOB). 
 ## Results
 
 <p align="center">
-  <img src="figures/vel_ori_44_57.png" alt="Result plots" width=80% style="display: block; margin-left:auto; margin-right:auto; width=50%"/> 
+  <img src="figures/ori_bodyvel.png" alt="Result plots" width=80% style="display: block; margin-left:auto; margin-right:auto; width=50%"/> 
   <p align="justify"><strong>Figure 2: </strong>Yaw, pitch and roll angles of the main body are depicted in the left three figures. Body Velocities are depicted in the right three figures. <strong><em>Black:</em></strong> ground truth from ORB-SLAM3di system. <strong><em>Blue dashes:</em></strong> plain InEKF without DOB. <strong><em>Red dashes:</em></strong> InEKF with DOB.</p>
 </p>
 
