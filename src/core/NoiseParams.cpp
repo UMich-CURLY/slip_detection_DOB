@@ -22,7 +22,7 @@ using namespace std;
 NoiseParams::NoiseParams() {
     setGyroscopeNoise(0.01);
     setAccelerometerNoise(0.1);
-    setDisturbanceNoise(0.000000000000000000000000000000001);
+    setDisturbanceNoise(0.01);
     setGyroscopeBiasNoise(0.00001);
     setAccelerometerBiasNoise(0.0001);
     setContactNoise(0.1);

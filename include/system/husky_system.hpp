@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <vector>
 #include "ros/ros.h"
 
 
@@ -63,6 +64,7 @@ class HuskySystem {
         bool enable_friction_estimator;
         bool BodyVelEstModeOn_;
         Eigen::Matrix<double,3,3> wheel_vel_cov_;
+        Eigen::Matrix<double,3,3> wheel_vel_cov_adapt_;
         Eigen::Matrix<double,3,3> camera_vel_cov_;
         Eigen::Matrix<double,3,3> gps_vel_cov_;
 
@@ -112,6 +114,7 @@ class HuskySystem {
         int slip_flag_2=0;
         double chi;
         double chi_2;
+
 };
 
 #endif // HUSKYSYSTEM_H

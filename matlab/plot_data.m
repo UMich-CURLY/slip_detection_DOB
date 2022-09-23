@@ -5,18 +5,19 @@ close all;
 clc
 
 clear
-vel_in = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_vel_input.txt");
-bias_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_bias_est.txt");
-vel_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_vel_est.txt");
+vel_in = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_vel_input.txt");
+bias_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_bias_est.txt");
+vel_est = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_vel_est.txt");
 gt_pose = load("/home/xihang/Code/husky_inekf_plain/catkin_ws/src/husky_inekf/data/2022-05-11_mair_gt/1/trial1_rectangle_center.txt");
-est_pose = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/inekf_wheel_vel.txt");
-disturbance = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_disturbance_est.txt");
+est_pose = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/inekf_wheel_vel.txt");
+disturbance = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_disturbance_est.txt");
 t = est_pose(:,1);
-imu = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_imu.txt");
+imu = load("/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_imu.txt");
 
 
 
-%%  plot estimated pose with gt pose from zed slam
+%%  plot estimated pose with gt pose from zed slamup_to_hill3
+
 figure(1)
 
 plot(t,est_pose(:,2),'LineWidth',2);
@@ -86,8 +87,13 @@ ylabel("m/s", "FontSize", 12)
 box on
 grid on
 
+
+
+
 %% slip flag - slip detection
 figure(8);
+
+delta = 15;
 
 gt_time = linspace(0,120,12000);
 gt_slip = zeros(1,12000);
@@ -101,54 +107,201 @@ gt_slip(1687:2120)=1;
 gt_slip(6040:6454)=1;
 gt_slip(8507:8847)=1;
 
-downsampled_disturbance = downsample(disturbance,25);
+% downsampled_disturbance = downsample(disturbance,2);
 
-lightBlue = [0 0.4470 0.7410];
+blue = [0 0.4470 0.7410];
+red = [1 0 0];
 
-subplot(1,2,1)
+
+trunked_disturbance = [];
+for i=1:length(disturbance)
+    if disturbance(i,6)==1
+        trunked_disturbance = [trunked_disturbance; disturbance(i,:)];
+    end
+end
+        
+
 % scatter(gt_time, gt_slip);
-area(gt_time, gt_slip,'FaceColor',lightBlue,'EdgeColor', 'none');
+area(gt_time, gt_slip,'FaceColor',blue,'EdgeColor', 'none');
 
 hold on
-scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,6),8,'filled');
+scatter(trunked_disturbance(1:end,1)-disturbance(1,1),trunked_disturbance(1:end,6),20,'filled');
 % scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,7),5);
 % area(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,6));
 
-hold on
+% for i=2:length(downsampled_disturbance)
+%    x = [downsampled_disturbance(i-1,1)-downsampled_disturbance(1,1) downsampled_disturbance(i,1)-downsampled_disturbance(1,1)];
+%    if downsampled_disturbance(i-1,6)==1
+%        y = [1 1];
+%    elseif downsampled_disturbance(i-1,6)==0
+%        y = [0 0];
+%    end
+%     area(x,y,'FaceColor',red,'EdgeColor', 'none')
+%     hold on
+% end
 
-legend("$Slip$ (GT)","$Slip$ (Chi-Square Test)", 'FontSize',20, 'Interpreter','latex');
-xlabel("$time(s)$", "FontSize", 12,'Interpreter','latex');
-ylabel("$Slip$", "FontSize", 12,'Interpreter','latex');
-ylim([-0.2,1.2]);
+% x = [];
+% y = [];
+% 
+% for i=2:length(downsampled_disturbance)
+%    x = [downsampled_disturbance(i-1,1)-downsampled_disturbance(1,1) downsampled_disturbance(i,1)-downsampled_disturbance(1,1)];
+%    if downsampled_disturbance(i-1,6)==1
+%        y = [1 1];
+%    elseif downsampled_disturbance(i-1,6)==0
+%        y = [0 0];
+%    end
+% end
+% area(x,y,'FaceColor',red,'EdgeColor', 'none')
+% hold on
+
+legend("$Slip$ (GT)","$Slip$ (Chi-Square Test)", 'FontSize',19, 'Interpreter','latex');
+xlabel("$time(s)$", "FontSize", 25,'Interpreter','latex');
+ylabel("$Slip$", "FontSize", 25,'Interpreter','latex');
+ylim([-0.1,1.1]);
 xlim([0,120]);
 box on
 grid on
 
-writematrix(downsampled_disturbance,"disturbance.txt");
+%% Slip detection
+figure(93);
 
+
+blue = [0 0.4470 0.7410];
+red = [1 0 0];
+
+gt_time = linspace(5,25,2000);
+gt_slip = zeros(1,2000);
+gt_slip(230:680)=1;
+gt_slip(1190:1710)=1;
+
+trunked_disturbance = [];
+for i=1:length(disturbance)
+    if disturbance(i,6)==1
+        trunked_disturbance = [trunked_disturbance; disturbance(i,:)];
+    end
+end
+
+% scatter(gt_time, gt_slip);
+area(gt_time, gt_slip,'FaceColor',blue,'EdgeColor', 'none');
+
+hold on
+scatter(trunked_disturbance(1:end,1)-disturbance(1,1),trunked_disturbance(1:end,6),20,'filled');
+
+legend("$Slip$ (GT)","$Slip$ (Chi-Square Test)", 'FontSize',19, 'Interpreter','latex');
+xlabel("$time(s)$", "FontSize", 25,'Interpreter','latex');
+ylabel("$Slip$", "FontSize", 25,'Interpreter','latex');
+ylim([-0.1,1.1]);
+xlim([5,25]);
+box on
+grid on
+
+%% Slip detection
+
+time = disturbance(:,1) - disturbance(1,1);
+
+gt_slip_sync = [];
+for i=1067:5336
+    t = disturbance(i,1)-disturbance(1,1);
+    if (t>7.3 && t<11.8) || (t>16.9 && t<22.1)
+        gt_slip_sync = [gt_slip_sync;1];
+    else
+        gt_slip_sync = [gt_slip_sync;0];
+    end
+end
+
+% count false positive (detected slip that are actually not)
+count_false_pos = 0;
+count_true_neg = 0;
+count_false_neg = 0;
+count_true_pos = 0;
+count_acc = 0;
+for i=1067:5336
+    if disturbance(i,6) == 1 && gt_slip_sync(i-1066) == 0
+        count_false_pos = count_false_pos + 1;
+    elseif disturbance(i,6) == 0 && gt_slip_sync(i-1066) == 0
+        count_true_neg = count_true_neg + 1;
+        count_acc = count_acc+1;
+    elseif disturbance(i,6) == 0 && gt_slip_sync(i-1066) == 1
+        count_false_neg = count_false_neg + 1;
+    elseif disturbance(i,6) == 1 && gt_slip_sync(i-1066) == 1
+        count_true_pos = count_true_pos + 1;
+        count_acc = count_acc+1;
+    end
+end
+
+false_pos_rate = count_false_pos/(count_false_pos+count_true_neg);
+false_neg_Rate = count_false_neg/(count_false_neg+count_true_pos);
+acc = count_acc/(5336-1067+1);
+
+
+%% Slip detection
+
+gt_slip_sync = [];
+for i=1:length(disturbance)
+    t = disturbance(i,1)-disturbance(1,1);
+    if (t>6.67 && t<12.93) || (t>25.93 && t<32.47) ||(t>45.94 && t<55.14) ||(t>69.47 && t<79.14) ||(t>95.01 && t<105.8) ||(t>16.87 && t<21.20) ||(t>60.40 && t<64.54) ||(t>85.07 && t<88.47)
+        gt_slip_sync = [gt_slip_sync;1];
+    else
+        gt_slip_sync = [gt_slip_sync;0];
+    end
+end
+
+% count false positive (detected slip that are actually not)
+count_false_pos = 0;
+count_true_neg = 0;
+count_false_neg = 0;
+count_true_pos = 0;
+count_acc = 0;
+for i=1:length(disturbance)
+    if disturbance(i,6) == 1 && gt_slip_sync(i) == 0
+        count_false_pos = count_false_pos + 1;
+    elseif disturbance(i,6) == 0 && gt_slip_sync(i) == 0
+        count_true_neg = count_true_neg + 1;
+        count_acc = count_acc+1;
+    elseif disturbance(i,6) == 0 && gt_slip_sync(i) == 1
+        count_false_neg = count_false_neg + 1;
+    elseif disturbance(i,6) == 1 && gt_slip_sync(i) == 1
+        count_true_pos = count_true_pos + 1;
+        count_acc = count_acc+1;
+    end
+end
+
+false_pos_rate = count_false_pos/(count_false_pos+count_true_neg);
+false_neg_Rate = count_false_neg/(count_false_neg+count_true_pos);
+acc = count_acc/length(disturbance);
+
+
+%%
+figure(9);
+
+subplot(1,2,1)
+
+downsampled_disturbance_2 = downsample(disturbance,200);
+% scatter(gt_time, gt_slip);
+% area(gt_time, gt_slip,'FaceColor',lightBlue,'EdgeColor', 'none');
+boxchart(downsampled_disturbance_2(1:end,8),'orientation','horizontal');
+hold on
+
+xlabel("$Value$", "FontSize", 12,'Interpreter','latex');
+ylabel("$\chi^2$", "FontSize", 12,'Interpreter','latex');
+box on
+grid on
 
 subplot(1,2,2)
-lightBlue = [0 0.4470 0.7410];
-
-downsampled_disturbance_2 = downsample(disturbance,100);
 
 % scatter(gt_time, gt_slip);
 % area(gt_time, gt_slip,'FaceColor',lightBlue,'EdgeColor', 'none');
-boxchart(downsampled_disturbance_2(1:end,7));
+boxchart(downsampled_disturbance_2(1:end,7),'orientation','horizontal');
 hold on
 
 % scatter(downsampled_disturbance(1:end,1)-downsampled_disturbance(1,1),downsampled_disturbance(1:end,7),8,[0.4940 0.1840 0.5560],'filled');
 % hold on
 
-
-
-% legend("$Slip$ (Chi-Square Test using Slip Model)", 'FontSize',20, 'Interpreter','latex');
-xlabel("$Chi-Square$ $Test$ $Using$ $Slip$ $model$", "FontSize", 12,'Interpreter','latex');
-ylabel("$Chi$", "FontSize", 12,'Interpreter','latex');
+xlabel("$Value$", "FontSize", 12,'Interpreter','latex');
+ylabel("$\chi^2$ $(Slip$ $Model)$", "FontSize", 12,'Interpreter','latex');
 box on
 grid on
 
-writematrix(downsampled_disturbance,"disturbance.txt");
 %% chi
 figure(8);
 
