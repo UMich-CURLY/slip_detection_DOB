@@ -91,6 +91,6 @@ settings:
   base_frame_id: "/husky/imu" 
   pose_topic: "/husky/inekf_estimation/pose"
   path_topic: "/husky/inekf_estimation/path"
-  base_link: "/base_link"
+  velodyne_inekf: "/velodyne_inekf"
   publish_rate: 1000
   pose_skip: 1
