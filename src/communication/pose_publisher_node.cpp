@@ -53,6 +53,7 @@ void PosePublisherNode::posePublish(const husky_inekf::HuskyState& state_) {
     // Publish TF from odom frame to velodyne_inekf frame:
     tf::Transform transform;
     static tf::TransformBroadcaster br;
+
     tf::Matrix3x3 R1(tf::Quaternion(pose_msg.pose.pose.orientation.x,pose_msg.pose.pose.orientation.y,pose_msg.pose.pose.orientation.z,pose_msg.pose.pose.orientation.w));
     tf::Vector3 v1(pose_msg.pose.pose.position.x, pose_msg.pose.pose.position.y, pose_msg.pose.pose.position.z);
 
@@ -122,6 +123,7 @@ void PosePublisherNode::slipFlagPublish(const husky_inekf::HuskyState& state_) {
     slip_flag_pub_.publish(slip_flag_msg);
     // seq_++;
 }
+
 
 
 // Pose message callback

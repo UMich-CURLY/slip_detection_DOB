@@ -42,4 +42,3 @@ class PosePublisherNode{
         std::mutex poses_mutex_;
         std::thread pose_publishing_thread_;
 };
-

@@ -355,7 +355,7 @@ est_pose_Quat = [est_pose_w est_pose_x est_pose_y est_pose_z];
 est_pose_Euler =  quat2eul(est_pose_Quat);
 
 subplot(3,2,1)
-plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler_changed_frame(:,1),'k','LineWidth',1.5);
+plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler(:,1),'k','LineWidth',1.5);
 hold on
 plot(est_pose_baseline(:,1)-est_pose_baseline(1,1),est_pose_baseline_Euler(:,1),'b-.','LineWidth',1.3);
 hold on
@@ -364,13 +364,13 @@ hold on
 
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$yaw \; (rad)$', 'fontsize', fsize, 'Interpreter','latex')
-% xlim([44,57]);
+xlim([44,57]);
 box on
 grid on
 
 
 subplot(3,2,3)
-plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler_changed_frame(:,2),'k','LineWidth',1.5);
+plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler(:,2),'k','LineWidth',1.5);
 hold on
 plot(est_pose_baseline(:,1)-est_pose_baseline(1,1),est_pose_baseline_Euler(:,2),'b-.','LineWidth',1.3);
 hold on
@@ -379,21 +379,21 @@ hold on
 
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$pitch \; (rad)$', 'fontsize', fsize, 'Interpreter','latex')
-% xlim([44,57]);
+xlim([44,57]);
 box on
 grid on
 
 subplot(3,2,5)
-plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler_changed_frame(:,3),'k','LineWidth',1.5);
+plot(orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1,orbslam3_Euler(:,3),'k','LineWidth',1.5);
 hold on
 plot(est_pose_baseline(:,1)-est_pose_baseline(1,1),est_pose_baseline_Euler(:,3),'b-.','LineWidth',1.3);
 hold on
-plot(est_pose(:,1)-est_pose(1,1),est_pose_Euler(:,3),'r-.','LineWidth',1.3);
+plot(est_pose(:,1)-est_pose(1,1), est_pose_Euler(:,3),'r-.','LineWidth',1.3);
 hold on
 
 xlabel('$t \; (s)$', 'fontsize', fsize, 'Interpreter','latex')
 ylabel('$roll \; (rad)$', 'fontsize', fsize, 'Interpreter','latex')
-% xlim([44,57]);
+xlim([44,57]);
 box on
 grid on
 
@@ -535,8 +535,8 @@ orb_vx = [vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1 vel_x];
 orb_vy = [vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1 -vel_y];
 orb_vz = [vel_mat_orbslam3(:,1)-vel_mat_orbslam3(1,1)-0.1 -vel_z];
 
-orb_yaw = [orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1 -orbslam3_Euler(:,1)];
-orb_pitch = [orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1 -orbslam3_Euler(:,2)];
+orb_yaw = [orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1 orbslam3_Euler(:,1)];
+orb_pitch = [orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1 orbslam3_Euler(:,2)];
 orb_roll = [orbslam3_Mat(:,1)-orbslam3_Mat(1,1)-0.1 orbslam3_Euler(:,3)];
 
 % form array - baseline
@@ -659,7 +659,7 @@ rmse_DOB_roll = sqrt(immse(DOB_roll_extracted, orb_roll(1427:1621,2)));
 % find the closest point in baseline and DOB compared with Orb-SLAM3
 baseline_vx_extracted = [];
 DOB_vx_extracted = [];
-for i=662:858
+for i=663:858
     
     [closest_time,index] = min(abs(baseline_vx(:,1)-orb_vx(i,1)));
     baseline_vx_extracted = [baseline_vx_extracted;baseline_vx(index, 2)];
@@ -669,13 +669,13 @@ for i=662:858
    
 end
 
-rmse_baseline_vx_2 = sqrt(immse(baseline_vx_extracted, orb_vx(662:858,2)));
-rmse_DOB_vx_2 = sqrt(immse(DOB_vx_extracted, orb_vx(662:858,2)));
+rmse_baseline_vx_2 = sqrt(immse(baseline_vx_extracted, orb_vx(663:858,2)));
+rmse_DOB_vx_2 = sqrt(immse(DOB_vx_extracted, orb_vx(663:858,2)));
 
 % find the closest point in baseline and DOB compared with Orb-SLAM3
 baseline_vy_extracted = [];
 DOB_vy_extracted = [];
-for i=662:858
+for i=663:858
     
     [closest_time,index] = min(abs(baseline_vy(:,1)-orb_vy(i,1)));
     baseline_vy_extracted = [baseline_vy_extracted;baseline_vy(index, 2)];
@@ -685,13 +685,13 @@ for i=662:858
    
 end
 
-rmse_baseline_vy_2 = sqrt(immse(baseline_vy_extracted, orb_vy(662:858,2)));
-rmse_DOB_vy_2 = sqrt(immse(DOB_vy_extracted, orb_vy(662:858,2)));
+rmse_baseline_vy_2 = sqrt(immse(baseline_vy_extracted, orb_vy(663:858,2)));
+rmse_DOB_vy_2 = sqrt(immse(DOB_vy_extracted, orb_vy(663:858,2)));
 
 % find the closest point in baseline and DOB compared with Orb-SLAM3
 baseline_vz_extracted = [];
 DOB_vz_extracted = [];
-for i=662:858
+for i=663:858
     
     [closest_time,index] = min(abs(baseline_vz(:,1)-orb_vz(i,1)));
     baseline_vz_extracted = [baseline_vz_extracted;baseline_vz(index, 2)];
@@ -701,13 +701,13 @@ for i=662:858
    
 end
 
-rmse_baseline_vz_2 = sqrt(immse(baseline_vz_extracted, orb_vz(662:858,2)));
-rmse_DOB_vz_2 = sqrt(immse(DOB_vz_extracted, orb_vz(662:858,2)));
+rmse_baseline_vz_2 = sqrt(immse(baseline_vz_extracted, orb_vz(663:858,2)));
+rmse_DOB_vz_2 = sqrt(immse(DOB_vz_extracted, orb_vz(663:858,2)));
 
 % find the closest point in baseline and DOB compared with Orb-SLAM3
 baseline_yaw_extracted = [];
 DOB_yaw_extracted = [];
-for i=662:858
+for i=663:858
     
     [closest_time,index] = min(abs(baseline_yaw(:,1)-orb_yaw(i,1)));
     baseline_yaw_extracted = [baseline_yaw_extracted;baseline_yaw(index, 2)];
@@ -717,13 +717,13 @@ for i=662:858
    
 end
 
-rmse_baseline_yaw_2 = sqrt(immse(baseline_yaw_extracted, orb_yaw(662:858,2)));
-rmse_DOB_yaw_2 = sqrt(immse(DOB_yaw_extracted, orb_yaw(662:858,2)));
+rmse_baseline_yaw_2 = sqrt(immse(baseline_yaw_extracted, orb_yaw(663:858,2)));
+rmse_DOB_yaw_2 = sqrt(immse(DOB_yaw_extracted, orb_yaw(663:858,2)));
 
 % find the closest point in baseline and DOB compared with Orb-SLAM3
 baseline_pitch_extracted = [];
 DOB_pitch_extracted = [];
-for i=662:858
+for i=663:858
     
     [closest_time,index] = min(abs(baseline_pitch(:,1)-orb_pitch(i,1)));
     baseline_pitch_extracted = [baseline_pitch_extracted;baseline_pitch(index, 2)];
@@ -733,13 +733,13 @@ for i=662:858
    
 end
 
-rmse_baseline_pitch_2 = sqrt(immse(baseline_pitch_extracted, orb_pitch(662:858,2)));
-rmse_DOB_ptich_2 = sqrt(immse(DOB_pitch_extracted, orb_pitch(662:858,2)));
+rmse_baseline_pitch_2 = sqrt(immse(baseline_pitch_extracted, orb_pitch(663:858,2)));
+rmse_DOB_ptich_2 = sqrt(immse(DOB_pitch_extracted, orb_pitch(663:858,2)));
 
 % find the closest point in baseline and DOB compared with Orb-SLAM3
 baseline_roll_extracted = [];
 DOB_roll_extracted = [];
-for i=662:858
+for i=663:858
     
     [closest_time,index] = min(abs(baseline_roll(:,1)-orb_roll(i,1)));
     baseline_roll_extracted = [baseline_roll_extracted;baseline_roll(index, 2)];
@@ -749,8 +749,8 @@ for i=662:858
    
 end
 
-rmse_baseline_roll_2 = sqrt(immse(baseline_roll_extracted, orb_roll(662:858,2)));
-rmse_DOB_roll_2 = sqrt(immse(DOB_roll_extracted, orb_roll(662:858,2)));
+rmse_baseline_roll_2 = sqrt(immse(baseline_roll_extracted, orb_roll(663:858,2)));
+rmse_DOB_roll_2 = sqrt(immse(DOB_roll_extracted, orb_roll(663:858,2)));
 %% Functions
 function twist_vec = undwedge_se3(twist_mat)
     % v_x v_y v_z w_x w_y w_z

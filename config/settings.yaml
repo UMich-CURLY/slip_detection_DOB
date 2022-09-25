@@ -70,28 +70,27 @@ settings:
   # Enable this the program will record the pose, velocity, and bias estimated by the filter. 
   enable_pose_logger: true
   log_pose_skip: 0    # Number of pose to be skipped while recording. Ex. Set to 100 the program will record every 100 poses.
-  inekf_pose_filename: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/inekf_wheel_vel.txt"
-  inekf_vel_est_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_vel_est.txt"
-  inekf_bias_est_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_bias_est.txt"
-  inekf_disturbance_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_disturbance_est.txt"
+  inekf_pose_filename: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/inekf_wheel_vel.txt"
+  inekf_vel_est_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_vel_est.txt"
+  inekf_bias_est_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_bias_est.txt"
+  inekf_disturbance_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_disturbance_est.txt"
 
   # Debug Logger
   # Enable this the program will record the inputed velocity and imu.
   enable_debug_logger: true
-  inekf_vel_input_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_vel_input.txt"
-  inekf_imu_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/slip_detect7_slip_detection/wheel_imu.txt"
+  inekf_vel_input_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_vel_input.txt"
+  inekf_imu_file_name: "/home/xihang/Code/slip_detector_test(world_frame)/catkin_ws/src/slip_detector/data/2022-slip_detection/up_to_hill3_slip_detection/wheel_imu.txt"
 
 
   ######################
   # ROS pose publisher #
   ######################
+
   enable_pose_publisher: true
   map_frame_id : "/odom"
   base_frame_id: "/husky/imu" 
   pose_topic: "/husky/inekf_estimation/pose"
   path_topic: "/husky/inekf_estimation/path"
   base_link: "/base_link"
-  base_link_inekf: "/base_link_inekf"
-  velodyne_inekf: "/velodyne_inekf"
   publish_rate: 1000
   pose_skip: 1
