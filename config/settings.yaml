@@ -49,9 +49,9 @@ settings:
                                       # and current time. (sec) 
   estimator_enable_debug: false
 
-  enable_friction_estimator: true
+  enable_friction_estimator: false
 
-  enable_body_vel_est: true
+  enable_cov_adaptation: true
 
   decaying_rate: 2.5
 
@@ -94,4 +94,3 @@ settings:
   base_link: "/base_link"
   publish_rate: 1000
   pose_skip: 1
-  

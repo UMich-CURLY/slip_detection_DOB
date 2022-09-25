@@ -32,7 +32,7 @@ class PosePublisherNode{
         ros::Publisher slip_pub_;
         ros::Publisher slip_flag_pub_;
 
-        std::string pose_frame_,base_link_frame_;
+        std::string pose_frame_, velodyne_frame_;
         uint32_t seq_ = 0;
         double publish_rate_;
         int pose_skip_;
