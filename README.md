@@ -132,9 +132,13 @@ We also provide toggles for input logger during your development:
 The following settings will be applied to ros publisher nodes:
 * `enable_pose_publisher`: Toggle for publisher nodes. Setting to **true** stands for publish pose topic and path topic, while **false** will skip publisher nodes.
 
+* `map_frame_id`: The frame where the pose and path will be published to.
+
 * `pose_topic`: The topic of pose publisher node.
 
 * `path_topic`: The topic of path publisher node.
+
+* `velodyne_inekf`: The frame where lidar point cloud would be published to.
 
 * `publish_rate`: Rate of publishing.
 

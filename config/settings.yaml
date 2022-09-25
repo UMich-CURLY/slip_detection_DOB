@@ -88,7 +88,6 @@ settings:
 
   enable_pose_publisher: true
   map_frame_id : "/odom"
-  base_frame_id: "/husky/imu" 
   pose_topic: "/husky/inekf_estimation/pose"
   path_topic: "/husky/inekf_estimation/path"
   velodyne_inekf: "/velodyne_inekf"
