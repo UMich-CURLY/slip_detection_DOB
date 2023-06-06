@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -std=c++17 -O3  -shared -Wl,-soname,libgmock.so -o ../lib/libgmock.so CMakeFiles/gmock.dir/src/gmock-all.cc.o  -Wl,-rpath,/home/ubuntu/code/catkin_ws/src/slip_detection_DOB/build/gtest/lib ../lib/libgtest.so -lpthread 

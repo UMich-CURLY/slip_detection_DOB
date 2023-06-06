@@ -13,13 +13,14 @@
 #include <geometry_msgs/PoseStamped.h>
 #include "nav_msgs/Odometry.h"
 #include <nav_msgs/Path.h>
+#include "tf/transform_broadcaster.h"
 
 std::string file_name_tum = "/home/tingjun/Desktop/Husky/catkin_ws/src/husky_inekf/data/pathmap_tum.txt";
-typedef std::numeric_limits< double > dbl;
+typedef std::numeric_limits<double> dbl;
 
-void savePoseCallback(const geometry_msgs::Pose& pose, const long double timestamp);
+void savePoseCallback(const geometry_msgs::Pose &pose, const long double timestamp);
 
-void pathMapCallback(const nav_msgs::Path::ConstPtr& msg)
+void pathMapCallback(const nav_msgs::Path::ConstPtr &msg)
 {
   geometry_msgs::Pose pose;
   pose = msg->poses.back().pose;
@@ -32,7 +33,7 @@ void pathMapCallback(const nav_msgs::Path::ConstPtr& msg)
   savePoseCallback(pose, timestamp);
 }
 
-void cameraOdomCallback(const nav_msgs::Odometry& msg)
+void cameraOdomCallback(const nav_msgs::Odometry &msg)
 {
   geometry_msgs::Pose pose;
   pose = msg.pose.pose;
@@ -45,16 +46,17 @@ void cameraOdomCallback(const nav_msgs::Odometry& msg)
   savePoseCallback(pose, timestamp);
 }
 
-void savePoseCallback(const geometry_msgs::Pose& pose, const long double timestamp) {
-      // tum style
-      std::ofstream tum_outfile(file_name_tum,std::ofstream::out | std::ofstream::app );
-      tum_outfile.precision(dbl::max_digits10);
-      tum_outfile << timestamp << " "<< pose.position.x <<" "<< pose.position.y << " "<< pose.position.z << " "<< pose.orientation.x\
-      <<" "<< pose.orientation.y <<" "<< pose.orientation.z <<" "<< pose.orientation.w <<std::endl<<std::flush;
-      
-      tum_outfile.close();
-}
+void savePoseCallback(const geometry_msgs::Pose &pose, const long double timestamp)
+{
+  // tum style
+  std::ofstream tum_outfile(file_name_tum, std::ofstream::out | std::ofstream::app);
+  tum_outfile.precision(dbl::max_digits10);
+  tum_outfile << timestamp << " " << pose.position.x << " " << pose.position.y << " " << pose.position.z << " " << pose.orientation.x
+              << " " << pose.orientation.y << " " << pose.orientation.z << " " << pose.orientation.w << std::endl
+              << std::flush;
 
+  tum_outfile.close();
+}
 
 int main(int argc, char **argv)
 {
@@ -67,7 +69,7 @@ int main(int argc, char **argv)
   tum_outfile.close();
   std::cout << "Ready to subscribe to path_map topic" << std::endl;
   ros::Subscriber sub = n.subscribe("zed_node/path_map", 1000, pathMapCallback);
-  
+
   ros::spin();
 
   return 0;

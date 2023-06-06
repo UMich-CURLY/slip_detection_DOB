@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: husky_inekf
+Description: Description of husky_inekf
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: std_msgs sensor_msgs tf geometry_msgs

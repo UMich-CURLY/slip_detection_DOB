@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8.10)
 
 project(husky_inekf)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -DEIGEN_NO_DEBUG -march=native -Wl,--no-as-needed -DBOOST_LOG_DYN_LINK -lboost_log -lpthread -lboost_timer" ) #-DBOOST_LOG_DYN_LINK -lboost_log -lpthread needed for boost::log
-SET(CMAKE_CXX_COMPILER /usr/bin/g++)
-SET(CMAKE_C_COMPILER /usr/bin/gcc)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
 
 message("CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
 message("CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
@@ -18,11 +16,11 @@ SET(CMAKE_MODULE_PATH ${${PROJECT_NAME}_SOURCE_DIR}/cmake)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
   roscpp
-  tf
   std_msgs
   geometry_msgs
   sensor_msgs
   message_filters
+  tf
 )
 
 # Eigen 
@@ -71,14 +69,25 @@ include_directories(
 file(GLOB inekf_core
   "${PROJECT_SOURCE_DIR}/src/core/*.cpp"
 )
-add_library(husky_comms "${PROJECT_SOURCE_DIR}/src/communication/husky_comms.cpp")
-add_library(inekf_core ${inekf_core})
-add_library(husky_measurement "${PROJECT_SOURCE_DIR}/src/utils/measurement.cpp")
-add_library(utils "${PROJECT_SOURCE_DIR}/src/utils/utils.cpp")
-add_library(husky_state "${PROJECT_SOURCE_DIR}/src/system/husky_state.cpp")
-add_library(husky_system "${PROJECT_SOURCE_DIR}/src/system/husky_system.cpp")
-add_library(body_estimator "${PROJECT_SOURCE_DIR}/src/estimator/body_estimator.cpp")
-add_library(pose_publisher_node "${PROJECT_SOURCE_DIR}/src/communication/pose_publisher_node.cpp")
+add_library(husky_inekf_lib
+  "${PROJECT_SOURCE_DIR}/src/communication/husky_comms.cpp"
+  ${inekf_core}
+  "${PROJECT_SOURCE_DIR}/src/utils/measurement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/utils/utils.cpp"
+  "${PROJECT_SOURCE_DIR}/src/system/husky_state.cpp"
+  "${PROJECT_SOURCE_DIR}/src/system/husky_system.cpp"
+  "${PROJECT_SOURCE_DIR}/src/estimator/body_estimator.cpp"
+  "${PROJECT_SOURCE_DIR}/src/communication/pose_publisher_node.cpp"
+)
+
+# add_library(husky_comms "${PROJECT_SOURCE_DIR}/src/communication/husky_comms.cpp")
+# add_library(inekf_core ${inekf_core})
+# add_library(husky_measurement "${PROJECT_SOURCE_DIR}/src/utils/measurement.cpp")
+# add_library(utils "${PROJECT_SOURCE_DIR}/src/utils/utils.cpp")
+# add_library(husky_state "${PROJECT_SOURCE_DIR}/src/system/husky_state.cpp")
+# add_library(husky_system "${PROJECT_SOURCE_DIR}/src/system/husky_system.cpp")
+# add_library(body_estimator "${PROJECT_SOURCE_DIR}/src/estimator/body_estimator.cpp")
+# add_library(pose_publisher_node "${PROJECT_SOURCE_DIR}/src/communication/pose_publisher_node.cpp")
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -91,16 +100,9 @@ add_library(pose_publisher_node "${PROJECT_SOURCE_DIR}/src/communication/pose_pu
 
 add_executable(husky_estimator "${PROJECT_SOURCE_DIR}/src/husky_estimator.cpp")
 target_link_libraries(husky_estimator
+    husky_inekf_lib
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}
-    husky_comms
-    inekf_core
-    husky_measurement
-    utils
-    husky_system
-    husky_state
-    body_estimator
-    pose_publisher_node
 )
 
 

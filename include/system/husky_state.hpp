@@ -2,60 +2,62 @@
 #ifndef HUSKYSTATE_H
 #define HUSKYSTATE_H
 
-//C Libraries
+// C Libraries
 #include <stdint.h>
 
 #include <iostream>
 #include <memory>
 
-//External Libraries
+// External Libraries
 #include <Eigen/Dense>
 #include "ros/ros.h"
 
-//Husky Libraries
+// Husky Libraries
 #include "utils/imu.hpp"
 #include "utils/joint_state.hpp"
 #include "utils/utils.hpp"
 // #include "RosPublisher.h"
 // #include "PassiveTimeSync.h"
 
-namespace husky_inekf{
+namespace husky_inekf
+{
 
-class HuskyState {
+    class HuskyState
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         HuskyState();
 
         template <typename T>
         void setImu(
-            const std::shared_ptr<husky_inekf::ImuMeasurement<T>>& next_imu) {
+            const std::shared_ptr<husky_inekf::ImuMeasurement<T>> &next_imu)
+        {
 
             const auto imu_data = next_imu;
-            
+
             Eigen::Vector3d euler = Rotation2Euler(this->getRotation());
             // Set orientation rates
             Eigen::Vector3d angularVelocity, eulerRates;
-            angularVelocity <<  imu_data.get()->angular_velocity.x, 
-                                imu_data.get()->angular_velocity.y, 
-                                imu_data.get()->angular_velocity.z;
+            angularVelocity << imu_data.get()->angular_velocity.x,
+                imu_data.get()->angular_velocity.y,
+                imu_data.get()->angular_velocity.z;
             eulerRates = AngularVelocity2EulerRates(euler, angularVelocity);
-            dq_.block<3,1>(3,0) = eulerRates;
-
+            dq_.block<3, 1>(3, 0) = eulerRates;
             return;
         }
 
         void setJointState(
-            const std::shared_ptr<husky_inekf::JointStateMeasurement> 
-            next_joint_state);
-        void setBaseRotation(const Eigen::Matrix3d& R);
-        void setBasePosition(const Eigen::Vector3d& p);
-        void setBaseVelocity(const Eigen::Vector3d& v);
-        void setImuBias(const Eigen::VectorXd& bias);
-        void setDisturbance(const Eigen::VectorXd& disturbance);
+            const std::shared_ptr<husky_inekf::JointStateMeasurement>
+                next_joint_state);
+        void setBaseRotation(const Eigen::Matrix3d &R);
+        void setBasePosition(const Eigen::Vector3d &p);
+        void setBaseVelocity(const Eigen::Vector3d &v);
+        void setImuBias(const Eigen::VectorXd &bias);
+        void setDisturbance(const Eigen::VectorXd &disturbance);
         void clear();
 
-        Eigen::Matrix<double,10,1> q() const;
-        Eigen::Matrix<double,10,1> dq() const;
+        Eigen::Matrix<double, 10, 1> q() const;
+        Eigen::Matrix<double, 10, 1> dq() const;
         Eigen::Vector3d getPosition() const;
         Eigen::Quaternion<double> getQuaternion() const;
         Eigen::Matrix3d getRotation() const;
@@ -63,15 +65,15 @@ class HuskyState {
         Eigen::Vector3d getEulerRates() const;
         Eigen::Matrix<double, 4, 1> getEncoderPositions() const;
         Eigen::Matrix<double, 4, 1> getEncoderVelocities() const;
-//         Eigen::Matrix<double,10,1> getMotorPositions() const;
-//         Eigen::Matrix<double,10,1> getMotorVelocities() const;
-//         Eigen::Matrix<double,4,1> getGRF() const;
+        //         Eigen::Matrix<double,10,1> getMotorPositions() const;
+        //         Eigen::Matrix<double,10,1> getMotorVelocities() const;
+        //         Eigen::Matrix<double,4,1> getGRF() const;
         Eigen::Vector3d getAngularVelocity() const;
         Eigen::Vector3d getBodyVelocity() const;
         Eigen::Vector3d getWorldVelocity() const;
         Eigen::VectorXd getImuBias() const;
         Eigen::VectorXd getDisturbance() const;
-        
+
         // Extract robot pose:
         double x() const;
         double y() const;
@@ -97,28 +99,27 @@ class HuskyState {
         double dleftFrontMotor() const;
         double drightHindMotor() const;
         double dleftHindMotor() const;
-        
-        void setTime(double time_in){time_stamp_ = time_in;};
-        double getTime() const{return time_stamp_;};
+
+        void setTime(double time_in) { time_stamp_ = time_in; };
+        double getTime() const { return time_stamp_; };
 
         Eigen::MatrixXd getP() const;
-        void setP(const Eigen::MatrixXd& P);
+        void setP(const Eigen::MatrixXd &P);
 
-        friend std::ostream& operator<<(std::ostream& os, const  HuskyState& obj);  
-        
+        friend std::ostream &operator<<(std::ostream &os, const HuskyState &obj);
 
         // TODO
         int slip_flag = false;
-        
+
     private:
         double time_stamp_;
-        Eigen::Matrix<double, 10,1> q_;
-        Eigen::Matrix<double, 10,1> dq_;
-        Eigen::Matrix<double, 6,1> imu_bias_;
-        Eigen::Matrix<double,4,1> GRF_; //!< ground reaction force
-        Eigen::Matrix<double, 3,1> disturbance_; // disturbance 
+        Eigen::Matrix<double, 10, 1> q_;
+        Eigen::Matrix<double, 10, 1> dq_;
+        Eigen::Matrix<double, 6, 1> imu_bias_;
+        Eigen::Matrix<double, 4, 1> GRF_;         //!< ground reaction force
+        Eigen::Matrix<double, 3, 1> disturbance_; // disturbance
         Eigen::MatrixXd P_;
-};
+    };
 
 } // end namespace husky_inekf
 #endif

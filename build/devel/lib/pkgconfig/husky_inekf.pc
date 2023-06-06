@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/code/catkin_ws/src/slip_detection_DOB/build/devel
+
+Name: husky_inekf
+Description: Description of husky_inekf
+Version: 0.0.0
+Cflags: -I/home/ubuntu/code/catkin_ws/src/slip_detection_DOB/include
+Libs: -L${prefix}/lib 
+Requires: std_msgs sensor_msgs tf geometry_msgs

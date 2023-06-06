@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/ubuntu/code/catkin_ws/src/slip_detection_DOB/build/devel/setup.sh

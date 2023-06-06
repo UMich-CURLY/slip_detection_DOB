@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -std=c++17 -O3  -shared -Wl,-soname,libgtest_main.so -o ../lib/libgtest_main.so CMakeFiles/gtest_main.dir/src/gtest_main.cc.o  -Wl,-rpath,/home/ubuntu/code/catkin_ws/src/slip_detection_DOB/build/gtest/lib ../lib/libgtest.so -lpthread 
